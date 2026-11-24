@@ -1,5 +1,5 @@
 import React from 'react';
-import { Footprints, Moon, Heart, ChevronLeft, ChevronRight, Sliders, Database, Check } from 'lucide-react';
+import { Footprints, Moon, Heart, ChevronLeft, ChevronRight, Sliders, Database, Check, Edit3 } from 'lucide-react';
 import { DailyTargets, MealLog, DailyBiometrics } from '../types';
 import { formatDateDisplay, getTodayDateString, shiftDate } from '../utils/date';
 import { db } from '../db';
@@ -13,6 +13,8 @@ interface HomeScreenProps {
   historicalWeights: { date: string; weight: number; moving_avg: number }[];
   onOpenTargets: () => void;
   onOpenSettings: () => void;
+  onOpenEditBiometrics: () => void;
+  onNavigateMeals: () => void;
   onRefresh: () => void;
 }
 
@@ -25,6 +27,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   historicalWeights,
   onOpenTargets,
   onOpenSettings,
+  onOpenEditBiometrics,
+  onNavigateMeals,
   onRefresh,
 }) => {
   const today = getTodayDateString();
@@ -49,7 +53,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const fatPct = Math.min(Math.round((totalFat / targetFat) * 100), 100);
 
   const currentWaterL = ((biometrics?.water_ml || 0) / 1000).toFixed(1);
-  const targetWaterL = ((targets.target_water_ml || 3000) / 1000).toFixed(1);
   const isWaterGoalMet = (biometrics?.water_ml || 0) >= (targets.target_water_ml || 3000);
 
   const currentWeight = biometrics?.weight_kg || 73.8;
@@ -76,13 +79,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div className="flex flex-col gap-3.5 pb-2">
-      {/* Top Greeting Header */}
+      {/* Top Greeting Header Personalized to Surya */}
       <div className="flex justify-between items-center px-1">
         <div>
           <small className="text-ink-mute text-xs block font-medium">
             {formatDateDisplay(currentDate)}
           </small>
-          <b className="text-xl font-bold tracking-tight text-ink">Hi Ayu</b>
+          <b className="text-xl font-bold tracking-tight text-ink">Hi Surya</b>
         </div>
 
         <div className="flex items-center gap-2">
@@ -122,14 +125,21 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             <Database size={14} />
           </button>
 
-          <div className="w-9 h-9 rounded-full bg-coral text-white font-bold flex items-center justify-center text-xs shadow-xs">
-            AY
+          <div
+            onClick={onOpenEditBiometrics}
+            className="w-9 h-9 rounded-full bg-coral text-white font-bold flex items-center justify-center text-xs shadow-xs cursor-pointer hover:opacity-90"
+            title="Surya - Tap to Edit Profile / Telemetry"
+          >
+            SU
           </div>
         </div>
       </div>
 
-      {/* Main Energy & Ring Card */}
-      <div className="bg-white rounded-3xl p-4 border border-cream-200 shadow-card">
+      {/* Main Energy & Ring Card (Clickable to jump to Meals) */}
+      <div
+        onClick={onNavigateMeals}
+        className="bg-white rounded-3xl p-4 border border-cream-200 shadow-card cursor-pointer hover:border-coral/60 transition-colors"
+      >
         <div className="flex items-center gap-4">
           {/* Calorie Gauge Ring */}
           <div className="relative flex-none">
@@ -237,9 +247,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </div>
 
-      {/* Telemetry Chips (Steps, Sleep, Heart Rate) */}
+      {/* Telemetry Chips (Clickable to Edit/Override) */}
       <div className="grid grid-cols-3 gap-2">
-        <div className="bg-sun-light rounded-2xl p-3 text-center flex flex-col items-center justify-center">
+        <button
+          onClick={onOpenEditBiometrics}
+          className="bg-sun-light hover:opacity-90 rounded-2xl p-3 text-center flex flex-col items-center justify-center transition-all"
+        >
           <div className="text-sun font-bold mb-0.5">
             <Footprints size={18} />
           </div>
@@ -247,9 +260,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {biometrics?.steps ? `${(biometrics.steps / 1000).toFixed(1)}k` : '9.5k'}
           </b>
           <span className="text-[10px] text-ink-mute font-medium">steps</span>
-        </div>
+        </button>
 
-        <div className="bg-coral-light rounded-2xl p-3 text-center flex flex-col items-center justify-center">
+        <button
+          onClick={onOpenEditBiometrics}
+          className="bg-coral-light hover:opacity-90 rounded-2xl p-3 text-center flex flex-col items-center justify-center transition-all"
+        >
           <div className="text-coral font-bold mb-0.5">
             <Moon size={18} />
           </div>
@@ -257,9 +273,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {biometrics?.sleep_hours ? `${biometrics.sleep_hours}h` : '7.4h'}
           </b>
           <span className="text-[10px] text-ink-mute font-medium">sleep</span>
-        </div>
+        </button>
 
-        <div className="bg-rose-light rounded-2xl p-3 text-center flex flex-col items-center justify-center">
+        <button
+          onClick={onOpenEditBiometrics}
+          className="bg-rose-light hover:opacity-90 rounded-2xl p-3 text-center flex flex-col items-center justify-center transition-all"
+        >
           <div className="text-rose font-bold mb-0.5">
             <Heart size={18} />
           </div>
@@ -267,7 +286,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             {biometrics?.resting_hr || 60}
           </b>
           <span className="text-[10px] text-ink-mute font-medium">bpm</span>
-        </div>
+        </button>
       </div>
 
       {/* Water Hydration Card */}
@@ -300,10 +319,19 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </div>
 
-      {/* Weight Summary Sparkline Card */}
+      {/* Weight Summary Sparkline Card (With Direct Edit Button) */}
       <div className="bg-white rounded-3xl p-4 border border-cream-200 shadow-card flex justify-between items-center">
         <div>
-          <b className="text-sm font-bold text-ink block">Weight {currentWeight} kg</b>
+          <div className="flex items-center gap-2">
+            <b className="text-sm font-bold text-ink block">Weight {currentWeight} kg</b>
+            <button
+              onClick={onOpenEditBiometrics}
+              className="p-1 rounded-md text-ink-mute hover:text-coral hover:bg-cream-100 transition-colors"
+              title="Edit Weight / Biometrics"
+            >
+              <Edit3 size={13} />
+            </button>
+          </div>
           <small className="text-ink-mute text-xs font-medium">
             7-day avg {currentAvg} kg ↓
           </small>

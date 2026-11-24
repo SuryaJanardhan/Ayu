@@ -1,8 +1,9 @@
-import React from 'react';
-import { Trash2, Plus, Coffee, Utensils, Apple, Sandwich } from 'lucide-react';
-import { MealLog, MealCacheItem } from '../types';
+import React, { useState } from 'react';
+import { Trash2, Plus, Coffee, Utensils, Apple, Sandwich, Edit3 } from 'lucide-react';
+import { MealLog } from '../types';
 import { db } from '../db';
 import { normalizeMealPhrase } from '../utils/normalizer';
+import { EditMealModal } from './EditMealModal';
 
 interface MealsScreenProps {
   currentDate: string;
@@ -17,6 +18,8 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
   onOpenQuickSnap,
   onRefresh,
 }) => {
+  const [editingMeal, setEditingMeal] = useState<MealLog | null>(null);
+
   const totalCalories = mealLogs.reduce((sum, m) => sum + m.calories, 0);
 
   const frequentMeals = [
@@ -86,7 +89,7 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
         </div>
       </div>
 
-      {/* Today's Logged Meals */}
+      {/* Today's Logged Meals (With Edit & Delete) */}
       <div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-ink-mute mb-2 px-1">
           Today
@@ -115,9 +118,19 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
                   <b className="text-sm font-bold font-mono text-ink tabular-nums">
                     {log.calories}
                   </b>
+                  {/* Edit Meal Button */}
+                  <button
+                    onClick={() => setEditingMeal(log)}
+                    className="p-1 text-ink-mute hover:text-coral transition-colors"
+                    title="Edit meal"
+                  >
+                    <Edit3 size={14} />
+                  </button>
+                  {/* Delete Meal Button */}
                   <button
                     onClick={() => handleDeleteMeal(log.id)}
                     className="p-1 text-ink-mute hover:text-rose transition-colors"
+                    title="Delete meal"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -136,6 +149,15 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
         <Plus size={16} />
         <span>Tap + to log meal or snap photo</span>
       </button>
+
+      {/* Edit Modal */}
+      {editingMeal && (
+        <EditMealModal
+          meal={editingMeal}
+          onClose={() => setEditingMeal(null)}
+          onRefresh={onRefresh}
+        />
+      )}
     </div>
   );
 };

@@ -30,33 +30,35 @@ async function run() {
   });
 
   const page = await browser.newPage();
-  await page.goto('http://localhost:5173/', { waitUntil: 'networkidle0' });
-  console.log('Loaded dashboard successfully.');
-  await sleep(1000);
+  
+  // 1. Splash Screen Capture on immediate page load
+  const navPromise = page.goto('http://localhost:5173/');
+  await sleep(400); // capture during splash animation
+  await saveBoth(page, '00_splash_screen.png');
 
-  // 1. Home Screen (Coral ring, macros, chips, water, weight sparkline)
+  await navPromise;
+  console.log('Loaded dashboard successfully.');
+  await sleep(1400); // allow splash to finish fading out
+
+  // 2. Home Screen (Personalized "Hi Surya", avatar "SU", calorie gauge, chips)
   await saveBoth(page, '01_dashboard_mobile.png');
 
-  // 2. Open Snap Meal Modal via Center Floating Action Button (FAB)
+  // 3. Open Snap Meal Modal via Center Floating Action Button (FAB)
   const fabBtn = await page.waitForSelector('button[title*="Snap Meal"]');
   if (fabBtn) {
     await fabBtn.click();
-    await sleep(800);
+    await sleep(600);
     await saveBoth(page, '02_cache_hit_preview.png');
 
-    // Click Log Meal
-    const logBtns = await page.$$('button');
-    for (const b of logBtns) {
-      const text = await page.evaluate((el) => el.textContent, b);
-      if (text && text.includes('Log meal')) {
-        await b.click();
-        break;
-      }
+    // Close snap modal
+    const closeBtns = await page.$$('div.fixed button');
+    if (closeBtns.length > 0) {
+      await closeBtns[0].click();
+      await sleep(300);
     }
-    await sleep(600);
   }
 
-  // 3. Navigate to Meals Tab
+  // 4. Navigate to Meals Tab
   const navButtons = await page.$$('nav button');
   for (const b of navButtons) {
     const text = await page.evaluate((el) => el.textContent, b);
@@ -69,52 +71,67 @@ async function run() {
   await sleep(600);
   await saveBoth(page, '03_meals_screen.png');
 
-  // 4. Navigate to Train Tab
+  // 5. Open Edit Meal Modal (Click edit icon on first meal)
+  const editMealBtns = await page.$$('button[title="Edit meal"]');
+  if (editMealBtns.length > 0) {
+    await editMealBtns[0].click();
+    await sleep(500);
+    await saveBoth(page, '04_edit_meal_modal.png');
+
+    // Save or close
+    const closeBtns = await page.$$('div.fixed button');
+    if (closeBtns.length > 0) {
+      await closeBtns[0].click();
+      await sleep(300);
+    }
+  }
+
+  // 6. Navigate back to Home and open Edit Biometrics Modal (Click on avatar "SU")
+  for (const b of await page.$$('nav button')) {
+    const text = await page.evaluate((el) => el.textContent, b);
+    if (text && text.includes('Home')) {
+      await b.click();
+      break;
+    }
+  }
+  await sleep(500);
+
+  const avatarBtn = await page.waitForSelector('div[title*="Surya"]');
+  if (avatarBtn) {
+    await avatarBtn.click();
+    await sleep(500);
+    await saveBoth(page, '05_edit_biometrics_modal.png');
+
+    const closeBtns = await page.$$('div.fixed button');
+    if (closeBtns.length > 0) {
+      await closeBtns[0].click();
+      await sleep(300);
+    }
+  }
+
+  // 7. Navigate to Train tab and open Workout session modal with memory
   for (const b of await page.$$('nav button')) {
     const text = await page.evaluate((el) => el.textContent, b);
     if (text && text.includes('Train')) {
       await b.click();
-      console.log('Switched to Train tab');
       break;
     }
   }
-  await sleep(600);
-  await saveBoth(page, '04_train_screen.png');
+  await sleep(500);
 
-  // 5. Open Push Day Workout Session Modal from Train tab
   const allBtns = await page.$$('button');
   for (const b of allBtns) {
     const text = await page.evaluate((el) => el.textContent, b);
     if (text && text.includes('Push day')) {
       await b.click();
-      console.log('Clicked Push day button');
       break;
     }
   }
-  await sleep(800);
+  await sleep(700);
   await saveBoth(page, '06_workout_modal_memory.png');
 
-  // Close workout modal
-  const closeBtns = await page.$$('div.fixed button');
-  if (closeBtns.length > 0) {
-    await closeBtns[0].click();
-    await sleep(400);
-  }
-
-  // 6. Navigate to Progress Tab
-  for (const b of await page.$$('nav button')) {
-    const text = await page.evaluate((el) => el.textContent, b);
-    if (text && text.includes('Progress')) {
-      await b.click();
-      console.log('Switched to Progress tab');
-      break;
-    }
-  }
-  await sleep(600);
-  await saveBoth(page, '05_progress_screen.png');
-
   await browser.close();
-  console.log('All redesigned screens captured successfully.');
+  console.log('All updated screens captured successfully.');
 }
 
 run().catch((err) => {

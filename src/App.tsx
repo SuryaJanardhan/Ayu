@@ -8,6 +8,8 @@ import { SnapMealModal } from './components/SnapMealModal';
 import { TargetOverrideModal } from './components/TargetOverrideModal';
 import { WorkoutSessionModal } from './components/WorkoutSessionModal';
 import { SettingsModal } from './components/SettingsModal';
+import { EditBiometricsModal } from './components/EditBiometricsModal';
+import { SplashScreen } from './components/SplashScreen';
 import { db } from './db';
 import { initializeDatabaseSeed } from './db/seed';
 import { getTodayDateString } from './utils/date';
@@ -21,6 +23,7 @@ import {
 } from './types';
 
 export const App: React.FC = () => {
+  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [currentDate, setCurrentDate] = useState<string>(getTodayDateString());
   const [targets, setTargets] = useState<DailyTargets>({
@@ -44,6 +47,7 @@ export const App: React.FC = () => {
   const [isQuickSnapOpen, setIsQuickSnapOpen] = useState(false);
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isEditBioOpen, setIsEditBioOpen] = useState(false);
   const [activeWorkoutTemplate, setActiveWorkoutTemplate] = useState<WorkoutTemplate | undefined>(
     undefined
   );
@@ -101,6 +105,9 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F0EBE1] text-ink flex flex-col items-center justify-center sm:py-6">
+      {/* Animated Splash Screen on App Launch */}
+      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
+
       {/* Mobile Frame Container */}
       <div className="w-full max-w-[390px] h-[844px] bg-cream-100 sm:border-[8px] sm:border-ink sm:rounded-[44px] shadow-2xl flex flex-col overflow-hidden relative">
         {/* Scrollable Screen Content */}
@@ -115,6 +122,8 @@ export const App: React.FC = () => {
               historicalWeights={historicalWeights}
               onOpenTargets={() => setIsTargetModalOpen(true)}
               onOpenSettings={() => setIsSettingsModalOpen(true)}
+              onOpenEditBiometrics={() => setIsEditBioOpen(true)}
+              onNavigateMeals={() => setActiveTab('meals')}
               onRefresh={loadDashboardData}
             />
           )}
@@ -184,6 +193,15 @@ export const App: React.FC = () => {
         {isSettingsModalOpen && (
           <SettingsModal
             onClose={() => setIsSettingsModalOpen(false)}
+            onRefresh={loadDashboardData}
+          />
+        )}
+
+        {isEditBioOpen && (
+          <EditBiometricsModal
+            currentDate={currentDate}
+            biometrics={biometrics}
+            onClose={() => setIsEditBioOpen(false)}
             onRefresh={loadDashboardData}
           />
         )}
