@@ -1,11 +1,21 @@
 import puppeteer from 'puppeteer-core';
 import path from 'path';
+import fs from 'fs';
 
 const ARTIFACT_DIR = '/home/surya/.gemini/antigravity/brain/b526d79a-ca61-4305-bb13-397672d3c19e';
+const ROOT_UI_DIR = '/home/surya/Desktop/Ayu/ayu_ui_verification';
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+async function saveBoth(page, filename) {
+  const p1 = path.join(ARTIFACT_DIR, filename);
+  const p2 = path.join(ROOT_UI_DIR, filename);
+  await page.screenshot({ path: p1 });
+  fs.copyFileSync(p1, p2);
+  console.log(`Saved ${filename} to both directories.`);
+}
+
 async function run() {
-  console.log('Launching Chrome in mobile emulation mode...');
+  console.log('Launching Chrome in mobile viewport mode...');
   const browser = await puppeteer.launch({
     executablePath: '/usr/bin/google-chrome',
     headless: 'new',
@@ -24,112 +34,87 @@ async function run() {
   console.log('Loaded dashboard successfully.');
   await sleep(1000);
 
-  // 1. Initial Dashboard Screenshot
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, '01_dashboard_mobile.png') });
-  console.log('Saved 01_dashboard_mobile.png');
+  // 1. Home Screen (Coral ring, macros, chips, water, weight sparkline)
+  await saveBoth(page, '01_dashboard_mobile.png');
 
-  // 2. Nutrition Input - Deterministic Cache Test
-  const mealInput = await page.waitForSelector('input[placeholder*="2 eggs"]');
-  await mealInput.type('2 eggs on sourdough toast');
-  await sleep(800);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, '02_cache_hit_preview.png') });
-  console.log('Saved 02_cache_hit_preview.png');
+  // 2. Open Snap Meal Modal via Center Floating Action Button (FAB)
+  const fabBtn = await page.waitForSelector('button[title*="Snap Meal"]');
+  if (fabBtn) {
+    await fabBtn.click();
+    await sleep(800);
+    await saveBoth(page, '02_cache_hit_preview.png');
 
-  // Press Enter to log
-  await page.keyboard.press('Enter');
-  await sleep(600);
-
-  // 3. Hydration Test: Click +500 ml
-  const buttons = await page.$$('button');
-  for (const btn of buttons) {
-    const text = await page.evaluate((el) => el.textContent, btn);
-    if (text && text.includes('+500 ml')) {
-      await btn.click();
-      console.log('Clicked +500 ml button');
-      break;
-    }
-  }
-  await sleep(400);
-
-  // 4. Workout Modal Test (Push Day)
-  const allButtons = await page.$$('button');
-  for (const btn of allButtons) {
-    const text = await page.evaluate((el) => el.textContent, btn);
-    if (text && text.includes('Push Day')) {
-      await btn.click();
-      console.log('Clicked Push Day template button');
-      break;
-    }
-  }
-  await sleep(800);
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, '03_workout_modal_memory.png') });
-  console.log('Saved 03_workout_modal_memory.png');
-
-  // Click 60s Rest Timer
-  const timerButtons = await page.$$('button');
-  for (const btn of timerButtons) {
-    const text = await page.evaluate((el) => el.textContent, btn);
-    if (text && text.trim() === '60s') {
-      await btn.click();
-      console.log('Triggered 60s rest timer');
-      break;
-    }
-  }
-  await sleep(500);
-
-  // Complete and save workout
-  const modalButtons = await page.$$('button');
-  for (const btn of modalButtons) {
-    const text = await page.evaluate((el) => el.textContent, btn);
-    if (text && text.includes('Complete & Save Workout Session')) {
-      await btn.click();
-      console.log('Saved workout session');
-      break;
-    }
-  }
-  await sleep(600);
-
-  // 5. Target Override Modal
-  const targetModalBtn = await page.waitForSelector('button[title="Daily Target Overrides"]');
-  if (targetModalBtn) {
-    await targetModalBtn.click();
-    await sleep(600);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, '04_target_override_modal.png') });
-    console.log('Saved 04_target_override_modal.png');
-
-    const targetBtns = await page.$$('button');
-    for (const btn of targetBtns) {
-      const text = await page.evaluate((el) => el.textContent, btn);
-      if (text && text.includes('Save Target Override')) {
-        await btn.click();
+    // Click Log Meal
+    const logBtns = await page.$$('button');
+    for (const b of logBtns) {
+      const text = await page.evaluate((el) => el.textContent, b);
+      if (text && text.includes('Log meal')) {
+        await b.click();
         break;
       }
     }
-    await sleep(500);
+    await sleep(600);
   }
 
-  // 6. Settings & Backup Modal
-  const settingsBtn = await page.waitForSelector('button[title="Database Backup & Settings"]');
-  if (settingsBtn) {
-    await settingsBtn.click();
-    await sleep(600);
-    await page.screenshot({ path: path.join(ARTIFACT_DIR, '05_settings_backup_modal.png') });
-    console.log('Saved 05_settings_backup_modal.png');
-
-    // Close settings modal
-    const closeBtns = await page.$$('div.fixed button');
-    if (closeBtns.length > 0) {
-      await closeBtns[0].click();
+  // 3. Navigate to Meals Tab
+  const navButtons = await page.$$('nav button');
+  for (const b of navButtons) {
+    const text = await page.evaluate((el) => el.textContent, b);
+    if (text && text.includes('Meals')) {
+      await b.click();
+      console.log('Switched to Meals tab');
+      break;
     }
+  }
+  await sleep(600);
+  await saveBoth(page, '03_meals_screen.png');
+
+  // 4. Navigate to Train Tab
+  for (const b of await page.$$('nav button')) {
+    const text = await page.evaluate((el) => el.textContent, b);
+    if (text && text.includes('Train')) {
+      await b.click();
+      console.log('Switched to Train tab');
+      break;
+    }
+  }
+  await sleep(600);
+  await saveBoth(page, '04_train_screen.png');
+
+  // 5. Open Push Day Workout Session Modal from Train tab
+  const allBtns = await page.$$('button');
+  for (const b of allBtns) {
+    const text = await page.evaluate((el) => el.textContent, b);
+    if (text && text.includes('Push day')) {
+      await b.click();
+      console.log('Clicked Push day button');
+      break;
+    }
+  }
+  await sleep(800);
+  await saveBoth(page, '06_workout_modal_memory.png');
+
+  // Close workout modal
+  const closeBtns = await page.$$('div.fixed button');
+  if (closeBtns.length > 0) {
+    await closeBtns[0].click();
     await sleep(400);
   }
 
-  // 7. Final Dashboard State
-  await page.screenshot({ path: path.join(ARTIFACT_DIR, '06_final_dashboard_state.png') });
-  console.log('Saved 06_final_dashboard_state.png');
+  // 6. Navigate to Progress Tab
+  for (const b of await page.$$('nav button')) {
+    const text = await page.evaluate((el) => el.textContent, b);
+    if (text && text.includes('Progress')) {
+      await b.click();
+      console.log('Switched to Progress tab');
+      break;
+    }
+  }
+  await sleep(600);
+  await saveBoth(page, '05_progress_screen.png');
 
   await browser.close();
-  console.log('E2E Chrome UI execution finished successfully.');
+  console.log('All redesigned screens captured successfully.');
 }
 
 run().catch((err) => {

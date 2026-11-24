@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Header } from './components/Header';
-import { NutritionCard } from './components/NutritionCard';
-import { WorkoutCard } from './components/WorkoutCard';
-import { BiometricsCard } from './components/BiometricsCard';
-import { SleepCard } from './components/SleepCard';
-import { HydrationCard } from './components/HydrationCard';
+import { HomeScreen } from './components/HomeScreen';
+import { MealsScreen } from './components/MealsScreen';
+import { TrainScreen } from './components/TrainScreen';
+import { ProgressScreen } from './components/ProgressScreen';
+import { BottomNavigation, TabType } from './components/BottomNavigation';
+import { SnapMealModal } from './components/SnapMealModal';
 import { TargetOverrideModal } from './components/TargetOverrideModal';
 import { WorkoutSessionModal } from './components/WorkoutSessionModal';
 import { SettingsModal } from './components/SettingsModal';
@@ -21,6 +21,7 @@ import {
 } from './types';
 
 export const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<TabType>('home');
   const [currentDate, setCurrentDate] = useState<string>(getTodayDateString());
   const [targets, setTargets] = useState<DailyTargets>({
     date: currentDate,
@@ -33,11 +34,14 @@ export const App: React.FC = () => {
   });
   const [mealLogs, setMealLogs] = useState<MealLog[]>([]);
   const [workoutSessions, setWorkoutSessions] = useState<WorkoutSession[]>([]);
+  const [workoutTemplates, setWorkoutTemplates] = useState<WorkoutTemplate[]>([]);
   const [biometrics, setBiometrics] = useState<DailyBiometrics | undefined>(undefined);
   const [historicalWeights, setHistoricalWeights] = useState<
     { date: string; weight: number; moving_avg: number }[]
   >([]);
 
+  // Modals state
+  const [isQuickSnapOpen, setIsQuickSnapOpen] = useState(false);
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [activeWorkoutTemplate, setActiveWorkoutTemplate] = useState<WorkoutTemplate | undefined>(
@@ -67,6 +71,9 @@ export const App: React.FC = () => {
     const workouts = await db.workout_sessions.where('date').equals(currentDate).toArray();
     setWorkoutSessions(workouts);
 
+    const tmpls = await db.workout_templates.toArray();
+    setWorkoutTemplates(tmpls);
+
     const bio = await db.daily_biometrics.get(currentDate);
     setBiometrics(bio);
 
@@ -92,91 +99,70 @@ export const App: React.FC = () => {
     setIsWorkoutModalOpen(true);
   };
 
-  const handleResetSeed = async () => {
-    if (confirm('Reload seed data?')) {
-      await initializeDatabaseSeed(true);
-      await loadDashboardData();
-    }
-  };
-
-  const totalCalories = mealLogs.reduce((sum, m) => sum + m.calories, 0);
-  const totalProtein = mealLogs.reduce((sum, m) => sum + m.protein_g, 0);
-  const currentWater = biometrics?.water_ml || 0;
-
   return (
-    <div className="min-h-screen bg-slate-100/90 text-slate-900 flex flex-col items-center">
-      {/* Mobile-optimized viewport wrapper */}
-      <div className="w-full max-w-lg min-h-screen bg-slate-50/50 border-x border-slate-200/90 shadow-xl flex flex-col pb-12">
-        <Header
-          currentDate={currentDate}
-          onDateChange={setCurrentDate}
-          onOpenTargetModal={() => setIsTargetModalOpen(true)}
-          onOpenSettingsModal={() => setIsSettingsModalOpen(true)}
-          onResetSeed={handleResetSeed}
-        />
+    <div className="min-h-screen bg-[#F0EBE1] text-ink flex flex-col items-center justify-center sm:py-6">
+      {/* Mobile Frame Container */}
+      <div className="w-full max-w-[390px] h-[844px] bg-cream-100 sm:border-[8px] sm:border-ink sm:rounded-[44px] shadow-2xl flex flex-col overflow-hidden relative">
+        {/* Scrollable Screen Content */}
+        <main className="flex-1 overflow-y-auto px-4 pt-5 pb-3 scrollbar-none">
+          {activeTab === 'home' && (
+            <HomeScreen
+              currentDate={currentDate}
+              onDateChange={setCurrentDate}
+              targets={targets}
+              mealLogs={mealLogs}
+              biometrics={biometrics}
+              historicalWeights={historicalWeights}
+              onOpenTargets={() => setIsTargetModalOpen(true)}
+              onOpenSettings={() => setIsSettingsModalOpen(true)}
+              onRefresh={loadDashboardData}
+            />
+          )}
 
-        {/* Quick Telemetry Summary Bar */}
-        <div className="px-4 pt-3 pb-1">
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 grid grid-cols-3 gap-2 shadow-xs">
-            <div>
-              <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Intake</span>
-              <div className="text-sm font-extrabold font-mono text-slate-900 tabular-nums">
-                {totalCalories} <span className="text-[10px] text-slate-500 font-normal">kcal</span>
-              </div>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Protein</span>
-              <div className="text-sm font-extrabold font-mono text-emerald-700 tabular-nums">
-                {totalProtein} <span className="text-[10px] text-slate-500 font-normal">/ {targets.target_protein_g}g</span>
-              </div>
-            </div>
-            <div>
-              <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Hydration</span>
-              <div className="text-sm font-extrabold font-mono text-sky-700 tabular-nums">
-                {currentWater} <span className="text-[10px] text-slate-500 font-normal">ml</span>
-              </div>
-            </div>
-          </div>
-        </div>
+          {activeTab === 'meals' && (
+            <MealsScreen
+              currentDate={currentDate}
+              mealLogs={mealLogs}
+              onOpenQuickSnap={() => setIsQuickSnapOpen(true)}
+              onRefresh={loadDashboardData}
+            />
+          )}
 
-        {/* Modular Cards List */}
-        <main className="flex-1 px-4 py-3 space-y-4">
-          <NutritionCard
-            currentDate={currentDate}
-            targets={targets}
-            logs={mealLogs}
-            onRefresh={loadDashboardData}
-          />
+          {activeTab === 'train' && (
+            <TrainScreen
+              currentDate={currentDate}
+              sessions={workoutSessions}
+              templates={workoutTemplates}
+              onOpenSessionModal={handleOpenSessionModal}
+              onRefresh={loadDashboardData}
+            />
+          )}
 
-          <WorkoutCard
-            currentDate={currentDate}
-            sessions={workoutSessions}
-            onOpenSessionModal={handleOpenSessionModal}
-            onRefresh={loadDashboardData}
-          />
-
-          <BiometricsCard
-            currentDate={currentDate}
-            biometrics={biometrics}
-            historicalWeights={historicalWeights}
-            onRefresh={loadDashboardData}
-          />
-
-          <SleepCard
-            currentDate={currentDate}
-            biometrics={biometrics}
-            onRefresh={loadDashboardData}
-          />
-
-          <HydrationCard
-            currentDate={currentDate}
-            biometrics={biometrics}
-            targets={targets}
-            onRefresh={loadDashboardData}
-          />
+          {activeTab === 'progress' && (
+            <ProgressScreen
+              currentDate={currentDate}
+              biometrics={biometrics}
+              historicalWeights={historicalWeights}
+            />
+          )}
         </main>
 
-        {/* Modals */}
+        {/* Bottom Navigation */}
+        <BottomNavigation
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          onOpenQuickSnap={() => setIsQuickSnapOpen(true)}
+        />
+
+        {/* Modals & Sheets */}
+        {isQuickSnapOpen && (
+          <SnapMealModal
+            currentDate={currentDate}
+            onClose={() => setIsQuickSnapOpen(false)}
+            onRefresh={loadDashboardData}
+          />
+        )}
+
         {isTargetModalOpen && (
           <TargetOverrideModal
             currentDate={currentDate}
