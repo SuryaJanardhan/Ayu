@@ -38,7 +38,6 @@ export const App: React.FC = () => {
     { date: string; weight: number; moving_avg: number }[]
   >([]);
 
-  // Modals state
   const [isTargetModalOpen, setIsTargetModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [activeWorkoutTemplate, setActiveWorkoutTemplate] = useState<WorkoutTemplate | undefined>(
@@ -46,9 +45,7 @@ export const App: React.FC = () => {
   );
   const [isWorkoutModalOpen, setIsWorkoutModalOpen] = useState(false);
 
-  // Initialize DB and load data
   const loadDashboardData = useCallback(async () => {
-    // Targets
     const targetRec = await db.daily_targets.get(currentDate);
     if (targetRec) {
       setTargets(targetRec);
@@ -64,19 +61,15 @@ export const App: React.FC = () => {
       });
     }
 
-    // Meal Logs
     const meals = await db.meal_logs.where('date').equals(currentDate).toArray();
     setMealLogs(meals);
 
-    // Workout Sessions
     const workouts = await db.workout_sessions.where('date').equals(currentDate).toArray();
     setWorkoutSessions(workouts);
 
-    // Biometrics for current date
     const bio = await db.daily_biometrics.get(currentDate);
     setBiometrics(bio);
 
-    // Historical weights for 7-day trend
     const allBio = await db.daily_biometrics.toArray();
     const weightRecords = allBio
       .filter((b) => b.weight_kg !== undefined)
@@ -106,15 +99,14 @@ export const App: React.FC = () => {
     }
   };
 
-  // Aggregates for top quick telemetry bar
   const totalCalories = mealLogs.reduce((sum, m) => sum + m.calories, 0);
   const totalProtein = mealLogs.reduce((sum, m) => sum + m.protein_g, 0);
   const currentWater = biometrics?.water_ml || 0;
 
   return (
-    <div className="min-h-screen bg-obsidian-950 text-slate-100 flex flex-col items-center">
+    <div className="min-h-screen bg-slate-100/90 text-slate-900 flex flex-col items-center">
       {/* Mobile-optimized viewport wrapper */}
-      <div className="w-full max-w-lg min-h-screen bg-obsidian-900 border-x border-obsidian-700/60 shadow-2xl flex flex-col pb-12">
+      <div className="w-full max-w-lg min-h-screen bg-slate-50/50 border-x border-slate-200/90 shadow-xl flex flex-col pb-12">
         <Header
           currentDate={currentDate}
           onDateChange={setCurrentDate}
@@ -125,23 +117,23 @@ export const App: React.FC = () => {
 
         {/* Quick Telemetry Summary Bar */}
         <div className="px-4 pt-3 pb-1">
-          <div className="bg-obsidian-950/80 border border-obsidian-700/60 rounded-xl p-3 grid grid-cols-3 gap-2">
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-3.5 grid grid-cols-3 gap-2 shadow-xs">
             <div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase block">Intake</span>
-              <div className="text-sm font-bold font-mono text-white tabular-nums">
-                {totalCalories} <span className="text-[10px] text-slate-400 font-normal">kcal</span>
+              <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Intake</span>
+              <div className="text-sm font-extrabold font-mono text-slate-900 tabular-nums">
+                {totalCalories} <span className="text-[10px] text-slate-500 font-normal">kcal</span>
               </div>
             </div>
             <div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase block">Protein</span>
-              <div className="text-sm font-bold font-mono text-accent-emerald tabular-nums">
-                {totalProtein} <span className="text-[10px] text-slate-400 font-normal">/ {targets.target_protein_g}g</span>
+              <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Protein</span>
+              <div className="text-sm font-extrabold font-mono text-emerald-700 tabular-nums">
+                {totalProtein} <span className="text-[10px] text-slate-500 font-normal">/ {targets.target_protein_g}g</span>
               </div>
             </div>
             <div>
-              <span className="text-[10px] font-mono text-slate-400 uppercase block">Hydration</span>
-              <div className="text-sm font-bold font-mono text-accent-cyan tabular-nums">
-                {currentWater} <span className="text-[10px] text-slate-400 font-normal">ml</span>
+              <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Hydration</span>
+              <div className="text-sm font-extrabold font-mono text-sky-700 tabular-nums">
+                {currentWater} <span className="text-[10px] text-slate-500 font-normal">ml</span>
               </div>
             </div>
           </div>

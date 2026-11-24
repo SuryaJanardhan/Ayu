@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, Check, Timer, Sparkles } from 'lucide-react';
+import { X, Plus, Check, Timer, Sparkles } from 'lucide-react';
 import { WorkoutTemplate, WorkoutSession, ExerciseSet } from '../types';
 import { db } from '../db';
 
@@ -28,8 +28,6 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
   }
 
   const [exercises, setExercises] = useState<LocalExercise[]>([]);
-
-  // Rest Timer State
   const [timerSeconds, setTimerSeconds] = useState<number | null>(null);
 
   useEffect(() => {
@@ -42,7 +40,6 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
     return () => clearInterval(interval);
   }, [timerSeconds]);
 
-  // Load Previous Session Memory for this template
   useEffect(() => {
     async function loadPreviousMemory() {
       if (!template) {
@@ -59,7 +56,6 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
         return;
       }
 
-      // Query last completed session for this template
       const lastSession = await db.workout_sessions
         .where('template_id')
         .equals(template.id)
@@ -80,7 +76,6 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
         );
         setMemoryLoaded(true);
       } else {
-        // Fallback to template defaults
         setExercises(
           template.exercises.map((ex) => ({
             name: ex.name,
@@ -144,63 +139,63 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/85 backdrop-blur-md overflow-y-auto">
-      <div className="w-full max-w-lg bg-obsidian-900 border border-obsidian-700 rounded-2xl p-5 shadow-2xl my-auto max-h-[90vh] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/40 backdrop-blur-sm overflow-y-auto">
+      <div className="w-full max-w-lg bg-white border border-slate-200 rounded-2xl p-5 shadow-2xl my-auto max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-obsidian-800">
+        <div className="flex items-center justify-between pb-3 border-b border-slate-200">
           <div>
-            <h3 className="text-base font-bold text-white leading-tight">{sessionName}</h3>
+            <h3 className="text-base font-extrabold text-slate-900 leading-tight">{sessionName}</h3>
             <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[11px] font-mono text-slate-400">Date: {currentDate}</span>
+              <span className="text-[11px] font-mono text-slate-500">Date: {currentDate}</span>
               {memoryLoaded && (
-                <span className="inline-flex items-center gap-1 text-[10px] font-mono text-accent-indigo bg-accent-indigo/10 px-2 py-0.5 rounded-full border border-accent-indigo/20">
+                <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-200">
                   <Sparkles size={10} /> Pre-filled from Last Session
                 </span>
               )}
             </div>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
 
         {/* Rest Timer Widget */}
-        <div className="py-2.5 px-3 bg-obsidian-950 border border-obsidian-800 rounded-xl my-3 flex items-center justify-between">
-          <div className="flex items-center gap-2 text-xs font-mono">
-            <Timer size={14} className="text-accent-indigo" />
-            <span className="text-slate-300">Rest Timer:</span>
+        <div className="py-2.5 px-3 bg-slate-50 border border-slate-200 rounded-xl my-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-xs font-mono font-semibold">
+            <Timer size={14} className="text-indigo-600" />
+            <span className="text-slate-700">Rest Timer:</span>
             {timerSeconds !== null ? (
-              <span className="text-accent-amber font-bold text-sm tabular-nums">
+              <span className="text-amber-700 font-extrabold text-sm tabular-nums">
                 {timerSeconds}s remaining
               </span>
             ) : (
-              <span className="text-slate-500">Idle</span>
+              <span className="text-slate-400 font-normal">Idle</span>
             )}
           </div>
 
-          <div className="flex items-center gap-1 font-mono text-[10px]">
+          <div className="flex items-center gap-1 font-mono text-[10px] font-bold">
             <button
               onClick={() => setTimerSeconds(60)}
-              className="px-2 py-1 bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 rounded"
+              className="px-2 py-1 bg-white hover:bg-slate-200 text-slate-700 rounded border border-slate-200 shadow-xs"
             >
               60s
             </button>
             <button
               onClick={() => setTimerSeconds(90)}
-              className="px-2 py-1 bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 rounded"
+              className="px-2 py-1 bg-white hover:bg-slate-200 text-slate-700 rounded border border-slate-200 shadow-xs"
             >
               90s
             </button>
             <button
               onClick={() => setTimerSeconds(120)}
-              className="px-2 py-1 bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 rounded"
+              className="px-2 py-1 bg-white hover:bg-slate-200 text-slate-700 rounded border border-slate-200 shadow-xs"
             >
               120s
             </button>
             {timerSeconds !== null && (
               <button
                 onClick={() => setTimerSeconds(null)}
-                className="px-1.5 py-1 text-accent-rose hover:bg-accent-rose/10 rounded ml-1"
+                className="px-1.5 py-1 text-rose-600 hover:bg-rose-50 rounded ml-1"
               >
                 Clear
               </button>
@@ -213,20 +208,20 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
           {exercises.map((ex, exIdx) => (
             <div
               key={exIdx}
-              className="bg-obsidian-950/70 border border-obsidian-800 rounded-xl p-3"
+              className="bg-slate-50 border border-slate-200/90 rounded-xl p-3"
             >
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-white font-mono">{ex.name}</span>
+                <span className="text-xs font-bold text-slate-900 font-mono">{ex.name}</span>
                 <button
                   onClick={() => handleAddSet(exIdx)}
-                  className="px-2 py-0.5 bg-obsidian-800 hover:bg-obsidian-700 text-[10px] text-accent-indigo font-mono rounded flex items-center gap-1"
+                  className="px-2 py-0.5 bg-white hover:bg-indigo-50 border border-slate-200 text-[10px] text-indigo-700 font-mono font-bold rounded flex items-center gap-1 shadow-xs"
                 >
                   <Plus size={10} /> Add Set
                 </button>
               </div>
 
               <div className="space-y-1.5">
-                <div className="grid grid-cols-12 gap-1 text-[9px] font-mono text-slate-500 uppercase px-1">
+                <div className="grid grid-cols-12 gap-1 text-[9px] font-mono text-slate-500 uppercase font-semibold px-1">
                   <span className="col-span-2">Set</span>
                   <span className="col-span-5">Weight (kg)</span>
                   <span className="col-span-5">Reps</span>
@@ -234,7 +229,7 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
 
                 {ex.sets.map((s, sIdx) => (
                   <div key={sIdx} className="grid grid-cols-12 gap-1 items-center font-mono">
-                    <span className="col-span-2 text-xs text-slate-400 pl-1">#{s.set_number}</span>
+                    <span className="col-span-2 text-xs text-slate-500 font-bold pl-1">#{s.set_number}</span>
                     <div className="col-span-5">
                       <input
                         type="number"
@@ -243,7 +238,7 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
                         onChange={(e) =>
                           handleUpdateSet(exIdx, sIdx, 'weight_kg', parseFloat(e.target.value) || 0)
                         }
-                        className="w-full bg-obsidian-900 border border-obsidian-700 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-accent-indigo focus:outline-none"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-mono font-bold text-center focus:border-indigo-600 focus:outline-none shadow-xs"
                       />
                     </div>
                     <div className="col-span-5">
@@ -253,7 +248,7 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
                         onChange={(e) =>
                           handleUpdateSet(exIdx, sIdx, 'reps', parseInt(e.target.value, 10) || 0)
                         }
-                        className="w-full bg-obsidian-900 border border-obsidian-700 rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:border-accent-indigo focus:outline-none"
+                        className="w-full bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs text-slate-900 font-mono font-bold text-center focus:border-indigo-600 focus:outline-none shadow-xs"
                       />
                     </div>
                   </div>
@@ -264,25 +259,25 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
         </div>
 
         {/* Duration, RPE, Notes */}
-        <div className="pt-3 border-t border-obsidian-800 grid grid-cols-2 gap-2 text-xs font-mono mb-3">
+        <div className="pt-3 border-t border-slate-200 grid grid-cols-2 gap-2 text-xs font-mono mb-3">
           <div>
-            <label className="text-slate-400 text-[10px] uppercase block mb-1">Duration (min)</label>
+            <label className="text-slate-600 text-[10px] font-semibold uppercase block mb-1">Duration (min)</label>
             <input
               type="number"
               value={durationMinutes}
               onChange={(e) => setDurationMinutes(parseInt(e.target.value, 10) || 30)}
-              className="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl px-3 py-1.5 text-white"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-slate-900 font-bold"
             />
           </div>
           <div>
-            <label className="text-slate-400 text-[10px] uppercase block mb-1">RPE Intensity (1-10)</label>
+            <label className="text-slate-600 text-[10px] font-semibold uppercase block mb-1">RPE Intensity (1-10)</label>
             <input
               type="number"
               min="1"
               max="10"
               value={rpe}
               onChange={(e) => setRpe(parseInt(e.target.value, 10) || 8)}
-              className="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl px-3 py-1.5 text-white"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-1.5 text-slate-900 font-bold"
             />
           </div>
         </div>
@@ -290,7 +285,7 @@ export const WorkoutSessionModal: React.FC<WorkoutSessionModalProps> = ({
         {/* Submit */}
         <button
           onClick={handleSaveSession}
-          className="w-full py-3 bg-accent-indigo hover:bg-indigo-600 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg"
+          className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
         >
           <Check size={16} />
           <span>Complete & Save Workout Session</span>
