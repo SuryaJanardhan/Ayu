@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { X, Camera, Zap, Check, Sparkles } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { X, Camera, Zap, Check, Upload, Image as ImageIcon } from 'lucide-react';
 import { db } from '../db';
 import { normalizeMealPhrase } from '../utils/normalizer';
+import { compressImage, getFoodImageFallback } from '../utils/imageOptimizer';
 
 interface SnapMealModalProps {
   currentDate: string;
@@ -16,7 +17,10 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
 }) => {
   const [mode, setMode] = useState<'photo' | 'type' | 'quick'>('photo');
   const [typedPhrase, setTypedPhrase] = useState('2 eggs on sourdough toast');
+  const [customPhoto, setCustomPhoto] = useState<string | null>(null);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [isLogged, setIsLogged] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const matchedMeal = {
     name: '2 Eggs on Sourdough',
@@ -27,9 +31,25 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
     confidence: '98%',
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsCompressing(true);
+    try {
+      const compressed = await compressImage(file, 600, 600, 0.75);
+      setCustomPhoto(compressed);
+    } catch (err) {
+      console.error('Image compression failed:', err);
+    } finally {
+      setIsCompressing(false);
+    }
+  };
+
   const handleLog = async () => {
     const phrase = mode === 'type' ? typedPhrase : matchedMeal.name;
     const normalized = normalizeMealPhrase(phrase);
+    const finalImageUrl = customPhoto || getFoodImageFallback(phrase);
 
     await db.meal_logs.add({
       date: currentDate,
@@ -42,6 +62,7 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
       fat_g: matchedMeal.fat,
       logged_at: new Date().toISOString(),
       was_cached: true,
+      image_url: finalImageUrl,
     });
 
     await db.meal_cache.put({
@@ -54,6 +75,7 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
       hit_count: 5,
       created_at: new Date().toISOString(),
       last_used_at: new Date().toISOString(),
+      image_url: finalImageUrl,
     });
 
     setIsLogged(true);
@@ -77,13 +99,20 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
           </button>
         </div>
 
-        {/* Viewfinder simulation */}
+        {/* Viewfinder simulation with interactive custom photo support */}
         {mode === 'photo' ? (
           <div className="h-64 rounded-3xl bg-gradient-to-br from-[#F6D9A8] via-[#C98A4B] to-[#6E4524] relative flex items-center justify-center text-white/30 overflow-hidden shadow-inner">
-            {/* Viewfinder corner brackets */}
-            <div className="absolute inset-5 border-2 border-white/80 rounded-2xl pointer-events-none flex items-center justify-center">
-              <Camera size={48} className="text-white/40" />
-            </div>
+            {customPhoto ? (
+              <img
+                src={customPhoto}
+                alt="Captured meal"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-5 border-2 border-white/80 rounded-2xl pointer-events-none flex items-center justify-center">
+                <Camera size={48} className="text-white/40" />
+              </div>
+            )}
 
             {/* AI Bounding Tags */}
             <div className="absolute top-10 left-8 bg-white text-ink text-[11px] font-bold px-2.5 py-1 rounded-full shadow-md">
@@ -92,6 +121,19 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
             <div className="absolute bottom-10 right-8 bg-white text-ink text-[11px] font-bold px-2.5 py-1 rounded-full shadow-md">
               Sourdough
             </div>
+
+            {/* Upload / Capture Trigger */}
+            <label className="absolute bottom-3 left-3 bg-white/90 hover:bg-white text-ink text-xs font-bold px-3 py-1.5 rounded-xl shadow cursor-pointer flex items-center gap-1.5 transition-colors">
+              <Upload size={13} className="text-coral" />
+              <span>{isCompressing ? 'Compressing...' : 'Upload Photo'}</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+              />
+            </label>
           </div>
         ) : (
           <div className="h-44 bg-cream-100 rounded-3xl p-4 flex flex-col justify-center border border-cream-200">
@@ -110,8 +152,12 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
         {/* Matched Meal Card */}
         <div className="bg-cream-100 rounded-2xl p-3 border border-cream-200">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-sun-light text-sun flex items-center justify-center text-lg flex-none">
-              <Zap size={22} className="text-coral" />
+            <div className="w-12 h-12 rounded-xl bg-sun-light overflow-hidden flex items-center justify-center flex-none border border-cream-200">
+              {customPhoto ? (
+                <img src={customPhoto} alt="Meal preview" className="w-full h-full object-cover" />
+              ) : (
+                <Zap size={22} className="text-coral" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <b className="text-sm font-bold text-ink block truncate">{matchedMeal.name}</b>
@@ -144,7 +190,7 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
           className="w-full py-3.5 bg-coral hover:bg-coral-hover text-white font-bold rounded-2xl text-sm transition-all shadow-card active:scale-[0.99] flex items-center justify-center gap-1.5"
         >
           {isLogged ? <Check size={18} strokeWidth={3} /> : null}
-          <span>{isLogged ? 'Logged!' : 'Log meal'}</span>
+          <span>{isLogged ? 'Logged with photo!' : 'Log meal'}</span>
         </button>
 
         {/* Segmented Mode Switcher */}

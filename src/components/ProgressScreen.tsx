@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
-import { Camera, TrendingDown, User, Sparkles } from 'lucide-react';
-import { DailyBiometrics } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Camera, TrendingDown, User, Plus, Trash2, Check, Upload } from 'lucide-react';
+import { DailyBiometrics, ProgressPhoto } from '../types';
+import { db } from '../db';
+import { compressImage } from '../utils/imageOptimizer';
+import { getTodayDateString } from '../utils/date';
 
 interface ProgressScreenProps {
   currentDate: string;
@@ -10,11 +13,68 @@ interface ProgressScreenProps {
 
 export const ProgressScreen: React.FC<ProgressScreenProps> = ({
   biometrics,
-  historicalWeights,
 }) => {
   const [range, setRange] = useState<'7d' | '30d'>('7d');
+  const [photos, setPhotos] = useState<ProgressPhoto[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newLabel, setNewLabel] = useState('Weekly Check-in');
+  const [newWeight, setNewWeight] = useState(
+    biometrics?.weight_kg ? String(biometrics.weight_kg) : '73.8'
+  );
+  const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const loadPhotos = async () => {
+    const list = await db.progress_photos.orderBy('created_at').toArray();
+    setPhotos(list);
+  };
+
+  useEffect(() => {
+    loadPhotos();
+  }, []);
 
   const currentWeight = biometrics?.weight_kg || 73.8;
+
+  const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const compressed = await compressImage(file, 600, 800, 0.75);
+      setPreviewPhoto(compressed);
+    } catch (err) {
+      console.error('Photo optimization failed:', err);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveProgressPhoto = async () => {
+    if (!previewPhoto) return;
+
+    await db.progress_photos.add({
+      date: getTodayDateString(),
+      label: newLabel.trim() || 'Check-in',
+      weight_kg: parseFloat(newWeight) || currentWeight,
+      image_url: previewPhoto,
+      created_at: new Date().toISOString(),
+    });
+
+    setPreviewPhoto(null);
+    setShowAddModal(false);
+    await loadPhotos();
+  };
+
+  const handleDeletePhoto = async (id?: number) => {
+    if (!id) return;
+    await db.progress_photos.delete(id);
+    await loadPhotos();
+  };
+
+  const beforePhoto = photos[0];
+  const afterPhoto = photos.length > 1 ? photos[photos.length - 1] : photos[0];
 
   return (
     <div className="flex flex-col gap-4 pb-2">
@@ -78,33 +138,144 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
         </div>
       </div>
 
-      {/* Before / After Photo Progression */}
+      {/* Before / After Photo Progression from Local DB */}
       <div>
-        <h3 className="text-xs font-bold uppercase tracking-wider text-ink-mute mb-2 px-1">
-          Before · After
-        </h3>
+        <div className="flex justify-between items-center mb-2 px-1">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-ink-mute">
+            Before · After ({photos.length} photos)
+          </h3>
+          <span className="text-[10px] font-mono text-coral font-bold">Local Compressed Vault</span>
+        </div>
+
         <div className="grid grid-cols-2 gap-2.5">
-          <div className="h-44 rounded-3xl bg-gradient-to-b from-[#C7D2FE] to-[#E0E7FF] flex flex-col items-center justify-center relative p-3 text-ink/70">
-            <User size={54} strokeWidth={1.5} />
-            <em className="absolute bottom-2.5 left-2.5 bg-ink/75 text-white not-italic text-[11px] font-bold px-2 py-0.5 rounded-xl">
-              Oct 24
+          {/* Before Photo */}
+          <div className="h-44 rounded-3xl overflow-hidden bg-cream-100 border border-cream-200 relative flex items-center justify-center shadow-card">
+            {beforePhoto ? (
+              <img
+                src={beforePhoto.image_url}
+                alt={beforePhoto.label}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User size={54} className="text-ink/30" />
+            )}
+            <em className="absolute bottom-2.5 left-2.5 bg-ink/80 backdrop-blur-xs text-white not-italic text-[10px] font-bold px-2 py-0.5 rounded-xl shadow-xs">
+              {beforePhoto ? `${beforePhoto.date.slice(5)} · ${beforePhoto.weight_kg}kg` : 'Initial'}
             </em>
           </div>
 
-          <div className="h-44 rounded-3xl bg-gradient-to-b from-[#FFC9B3] to-[#FFE4D9] flex flex-col items-center justify-center relative p-3 text-coral">
-            <User size={54} strokeWidth={1.8} />
-            <em className="absolute bottom-2.5 left-2.5 bg-ink/75 text-white not-italic text-[11px] font-bold px-2 py-0.5 rounded-xl">
-              Today
+          {/* After / Current Photo */}
+          <div className="h-44 rounded-3xl overflow-hidden bg-cream-100 border border-cream-200 relative flex items-center justify-center shadow-card">
+            {afterPhoto ? (
+              <img
+                src={afterPhoto.image_url}
+                alt={afterPhoto.label}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <User size={54} className="text-coral/40" />
+            )}
+            <em className="absolute bottom-2.5 left-2.5 bg-coral text-white not-italic text-[10px] font-bold px-2 py-0.5 rounded-xl shadow-xs">
+              {afterPhoto ? `Today · ${afterPhoto.weight_kg}kg` : 'Today'}
             </em>
+            {photos.length > 2 && (
+              <button
+                onClick={() => handleDeletePhoto(afterPhoto?.id)}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-ink/60 text-white hover:bg-rose transition-colors"
+                title="Delete photo"
+              >
+                <Trash2 size={12} />
+              </button>
+            )}
           </div>
         </div>
       </div>
 
       {/* Add Progress Photo CTA */}
-      <button className="w-full py-3.5 bg-coral-light hover:bg-coral text-coral hover:text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-card transition-all active:scale-[0.99]">
+      <button
+        onClick={() => setShowAddModal(true)}
+        className="w-full py-3.5 bg-coral-light hover:bg-coral text-coral hover:text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-1.5 shadow-card transition-all active:scale-[0.99]"
+      >
         <Camera size={16} />
-        <span>Add progress photo</span>
+        <span>Add progress photo (Compressed Storage)</span>
       </button>
+
+      {/* Upload Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm">
+          <div className="w-full max-w-sm bg-white border border-cream-200 rounded-3xl p-5 shadow-2xl flex flex-col gap-3">
+            <b className="text-base font-bold text-ink">Add Progress Photo</b>
+
+            <div className="h-48 rounded-2xl bg-cream-100 border border-dashed border-cream-200 flex flex-col items-center justify-center relative overflow-hidden">
+              {previewPhoto ? (
+                <img src={previewPhoto} alt="Preview" className="w-full h-full object-cover" />
+              ) : (
+                <label className="flex flex-col items-center cursor-pointer p-4 text-center">
+                  <Upload size={32} className="text-coral mb-2" />
+                  <span className="text-xs font-bold text-ink">
+                    {isUploading ? 'Optimizing photo...' : 'Select or Take Photo'}
+                  </span>
+                  <span className="text-[10px] text-ink-mute mt-1">
+                    Auto-downscaled to ~40KB WebP
+                  </span>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoSelect}
+                    className="hidden"
+                  />
+                </label>
+              )}
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold uppercase text-ink-mute block mb-1">
+                Check-in Label
+              </label>
+              <input
+                type="text"
+                value={newLabel}
+                onChange={(e) => setNewLabel(e.target.value)}
+                className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-1.5 text-xs text-ink font-semibold"
+              />
+            </div>
+
+            <div>
+              <label className="text-[10px] font-bold uppercase text-ink-mute block mb-1">
+                Weight (kg)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                value={newWeight}
+                onChange={(e) => setNewWeight(e.target.value)}
+                className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-1.5 text-xs text-ink font-mono font-bold"
+              />
+            </div>
+
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => {
+                  setPreviewPhoto(null);
+                  setShowAddModal(false);
+                }}
+                className="flex-1 py-2.5 bg-cream-100 text-ink-mute font-bold rounded-xl text-xs"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProgressPhoto}
+                disabled={!previewPhoto}
+                className="flex-1 py-2.5 bg-coral text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 disabled:opacity-50"
+              >
+                <Check size={14} />
+                <span>Save to Vault</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

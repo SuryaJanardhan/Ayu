@@ -8,6 +8,7 @@ export interface MealCacheItem {
   hit_count: number;
   created_at: string;
   last_used_at: string;
+  image_url?: string;
 }
 
 export interface MealLog {
@@ -22,6 +23,7 @@ export interface MealLog {
   fat_g: number;
   logged_at: string;
   was_cached?: boolean;
+  image_url?: string;
 }
 
 export interface ExerciseSet {
@@ -85,4 +87,24 @@ export interface DailyBiometrics {
   resting_hr?: number;
   water_ml: number;
   updated_at: string;
+}
+
+export interface ProgressPhoto {
+  id?: number;
+  date: string; // YYYY-MM-DD
+  label: string;
+  image_url: string; // compressed DataURL
+  weight_kg?: number;
+  created_at: string;
+}
+
+export interface WeeklySnapshot {
+  id?: number;
+  snapshot_date: string; // YYYY-MM-DD
+  week_label: string;
+  compressed_data: string; // gzipped base64
+  original_bytes: number;
+  compressed_bytes: number;
+  ratio_percent: number;
+  created_at: string;
 }

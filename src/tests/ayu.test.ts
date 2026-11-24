@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { normalizeMealPhrase } from '../utils/normalizer';
 import { calculate7DayMovingAverage, calculateEnergyBalance } from '../utils/analytics';
 import { shiftDate, getTodayDateString } from '../utils/date';
+import { getFoodImageFallback } from '../utils/imageOptimizer';
+import { compressSnapshotData, decompressSnapshotData } from '../utils/compression';
 
 describe('Ayu Core Utilities & Telemetry Logic', () => {
   describe('Meal Phrase Normalization (Deterministic Cache Key)', () => {
@@ -25,6 +27,40 @@ describe('Ayu Core Utilities & Telemetry Logic', () => {
     });
   });
 
+  describe('Image Optimization & Food Presets', () => {
+    it('resolves correct default SVG illustrations for staple meals', () => {
+      expect(getFoodImageFallback('2 eggs on sourdough toast')).toContain('data:image/svg+xml');
+      expect(getFoodImageFallback('chicken breast with white rice')).toContain('data:image/svg+xml');
+      expect(getFoodImageFallback('whey protein shake')).toContain('data:image/svg+xml');
+      expect(getFoodImageFallback('greek yogurt and berries')).toContain('data:image/svg+xml');
+      expect(getFoodImageFallback('unknown exotic meal')).toContain('data:image/svg+xml');
+    });
+  });
+
+  describe('Two-Tier Storage Compression & Decompression', () => {
+    it('compresses and safely reconstructs snapshot payloads without data loss', async () => {
+      const mockVault = {
+        version: 2,
+        meals: [
+          { id: 1, name: 'Eggs on toast', calories: 340, image: 'data:image/jpeg;base64,sample' },
+          { id: 2, name: 'Chicken rice', calories: 520, image: 'data:image/jpeg;base64,sample2' },
+        ],
+        workouts: [{ id: 1, name: 'Push day', sets: 4 }],
+        weights: [74.5, 74.2, 73.8],
+      };
+
+      const compressed = await compressSnapshotData(mockVault);
+      expect(compressed.compressedData).toBeDefined();
+      expect(compressed.compressedData.length).toBeGreaterThan(0);
+      expect(compressed.originalBytes).toBeGreaterThan(0);
+
+      const decompressed = await decompressSnapshotData(compressed.compressedData);
+      expect(decompressed).toEqual(mockVault);
+      expect(decompressed.meals.length).toBe(2);
+      expect(decompressed.meals[0].calories).toBe(340);
+    });
+  });
+
   describe('7-Day Weight Moving Average (Noise Smoothing)', () => {
     it('returns empty array when input is empty', () => {
       expect(calculate7DayMovingAverage([])).toEqual([]);
@@ -39,8 +75,8 @@ describe('Ayu Core Utilities & Telemetry Logic', () => {
       const result = calculate7DayMovingAverage(records);
       expect(result.length).toBe(3);
       expect(result[0].moving_avg).toBe(75.0);
-      expect(result[1].moving_avg).toBe(74.5); // (75 + 74) / 2
-      expect(result[2].moving_avg).toBe(74.0); // (75 + 74 + 73) / 3
+      expect(result[1].moving_avg).toBe(74.5);
+      expect(result[2].moving_avg).toBe(74.0);
     });
 
     it('caps the rolling window at exactly 7 days', () => {
@@ -52,7 +88,7 @@ describe('Ayu Core Utilities & Telemetry Logic', () => {
         { date: '2026-11-05', weight: 70 },
         { date: '2026-11-06', weight: 70 },
         { date: '2026-11-07', weight: 70 },
-        { date: '2026-11-08', weight: 80 }, // day 8: window is days 2 to 8 (six 70s + one 80 = 500 / 7 = 71.43)
+        { date: '2026-11-08', weight: 80 },
       ];
       const result = calculate7DayMovingAverage(records);
       expect(result[7].moving_avg).toBe(71.43);

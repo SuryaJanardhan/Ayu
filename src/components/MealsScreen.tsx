@@ -3,6 +3,7 @@ import { Trash2, Plus, Coffee, Utensils, Apple, Sandwich, Edit3 } from 'lucide-r
 import { MealLog } from '../types';
 import { db } from '../db';
 import { normalizeMealPhrase } from '../utils/normalizer';
+import { getFoodImageFallback } from '../utils/imageOptimizer';
 import { EditMealModal } from './EditMealModal';
 
 interface MealsScreenProps {
@@ -31,6 +32,8 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
 
   const handleQuickAdd = async (meal: typeof frequentMeals[0]) => {
     const normalized = normalizeMealPhrase(meal.name);
+    const imageUrl = getFoodImageFallback(meal.name);
+
     await db.meal_logs.add({
       date: currentDate,
       meal_type: 'lunch',
@@ -42,6 +45,7 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
       fat_g: Math.round(meal.cal * 0.03),
       logged_at: new Date().toISOString(),
       was_cached: true,
+      image_url: imageUrl,
     });
     onRefresh();
   };
@@ -89,7 +93,7 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
         </div>
       </div>
 
-      {/* Today's Logged Meals (With Edit & Delete) */}
+      {/* Today's Logged Meals with Real / Fallback Photo Badges */}
       <div>
         <h3 className="text-xs font-bold uppercase tracking-wider text-ink-mute mb-2 px-1">
           Today
@@ -100,43 +104,51 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
           </div>
         ) : (
           <div className="space-y-2">
-            {mealLogs.map((log) => (
-              <div
-                key={log.id}
-                className="bg-white border border-cream-200 rounded-2xl p-3.5 flex items-center gap-3 shadow-card"
-              >
-                <div className="w-12 h-12 rounded-xl bg-sun-light text-sun flex items-center justify-center flex-none">
-                  <Utensils size={20} />
+            {mealLogs.map((log) => {
+              const displayImg = log.image_url || getFoodImageFallback(log.display_name);
+              return (
+                <div
+                  key={log.id}
+                  className="bg-white border border-cream-200 rounded-2xl p-3.5 flex items-center gap-3 shadow-card"
+                >
+                  {/* Photo / Graphic Thumbnail */}
+                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-cream-100 border border-cream-200 flex-none flex items-center justify-center">
+                    <img
+                      src={displayImg}
+                      alt={log.display_name}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <b className="text-sm font-bold text-ink block truncate">{log.display_name}</b>
+                    <small className="text-ink-mute text-xs font-medium">
+                      {log.protein_g}g protein {log.was_cached && '· Cached photo'}
+                    </small>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <b className="text-sm font-bold font-mono text-ink tabular-nums">
+                      {log.calories}
+                    </b>
+                    <button
+                      onClick={() => setEditingMeal(log)}
+                      className="p-1 text-ink-mute hover:text-coral transition-colors"
+                      title="Edit meal & photo"
+                    >
+                      <Edit3 size={14} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteMeal(log.id)}
+                      className="p-1 text-ink-mute hover:text-rose transition-colors"
+                      title="Delete meal"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <b className="text-sm font-bold text-ink block truncate">{log.display_name}</b>
-                  <small className="text-ink-mute text-xs font-medium">
-                    {log.protein_g}g protein {log.was_cached && '· Instant cache'}
-                  </small>
-                </div>
-                <div className="flex items-center gap-2">
-                  <b className="text-sm font-bold font-mono text-ink tabular-nums">
-                    {log.calories}
-                  </b>
-                  {/* Edit Meal Button */}
-                  <button
-                    onClick={() => setEditingMeal(log)}
-                    className="p-1 text-ink-mute hover:text-coral transition-colors"
-                    title="Edit meal"
-                  >
-                    <Edit3 size={14} />
-                  </button>
-                  {/* Delete Meal Button */}
-                  <button
-                    onClick={() => handleDeleteMeal(log.id)}
-                    className="p-1 text-ink-mute hover:text-rose transition-colors"
-                    title="Delete meal"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

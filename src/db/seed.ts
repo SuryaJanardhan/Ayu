@@ -1,6 +1,7 @@
-import { db } from './index';
+import { db, createWeeklySnapshot } from './index';
 import { getTodayDateString, shiftDate } from '../utils/date';
 import { normalizeMealPhrase } from '../utils/normalizer';
+import { getFoodImageFallback } from '../utils/imageOptimizer';
 
 export async function initializeDatabaseSeed(force = false) {
   const existingTemplates = await db.workout_templates.count();
@@ -55,7 +56,7 @@ export async function initializeDatabaseSeed(force = false) {
     },
   ]);
 
-  // 2. Seed Meal Cache for deterministic instant matching
+  // 2. Seed Meal Cache with optimized images
   const seedMeals = [
     {
       display_name: '2 Eggs on Sourdough Toast',
@@ -99,10 +100,11 @@ export async function initializeDatabaseSeed(force = false) {
       hit_count: 5,
       created_at: new Date().toISOString(),
       last_used_at: new Date().toISOString(),
+      image_url: getFoodImageFallback(meal.display_name),
     });
   }
 
-  // 3. Seed 7 Days of realistic biometrics showing downward weight trend
+  // 3. Seed Biometrics for past 7 days
   const weights = [74.6, 74.5, 74.3, 74.4, 74.1, 73.9, 73.8];
   const sleeps = [7.2, 6.8, 7.5, 8.0, 7.1, 6.9, 7.4];
   const stepsList = [8420, 10250, 9300, 11400, 7800, 10800, 9500];
@@ -112,7 +114,7 @@ export async function initializeDatabaseSeed(force = false) {
     await db.daily_biometrics.put({
       date: d,
       weight_kg: weights[i],
-      weight_is_manual: i === 6, // today is manual
+      weight_is_manual: i === 6,
       sleep_hours: sleeps[i],
       sleep_is_manual: false,
       steps: stepsList[i],
@@ -121,7 +123,6 @@ export async function initializeDatabaseSeed(force = false) {
       updated_at: new Date().toISOString(),
     });
 
-    // Default daily target for each day
     await db.daily_targets.put({
       date: d,
       target_calories: 2200,
@@ -133,7 +134,7 @@ export async function initializeDatabaseSeed(force = false) {
     });
   }
 
-  // Seed sample meal logs for today
+  // Seed sample meal logs for today with image attachments
   await db.meal_logs.bulkPut([
     {
       date: today,
@@ -146,6 +147,7 @@ export async function initializeDatabaseSeed(force = false) {
       fat_g: 14,
       logged_at: new Date(Date.now() - 4 * 3600 * 1000).toISOString(),
       was_cached: true,
+      image_url: getFoodImageFallback('eggs toast'),
     },
     {
       date: today,
@@ -158,10 +160,11 @@ export async function initializeDatabaseSeed(force = false) {
       fat_g: 6,
       logged_at: new Date(Date.now() - 1 * 3600 * 1000).toISOString(),
       was_cached: true,
+      image_url: getFoodImageFallback('chicken rice'),
     },
   ]);
 
-  // Seed one completed previous session so template memory pre-fill is verified
+  // Seed previous workout session
   const yesterday = shiftDate(today, -1);
   await db.workout_sessions.put({
     template_id: 'template-push',
@@ -190,4 +193,25 @@ export async function initializeDatabaseSeed(force = false) {
       },
     ],
   });
+
+  // Seed progress photos
+  await db.progress_photos.bulkPut([
+    {
+      date: shiftDate(today, -30),
+      label: 'Month 1 Check-in',
+      weight_kg: 75.8,
+      image_url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="280" viewBox="0 0 200 280"><rect width="200" height="280" rx="24" fill="%23C7D2FE"/><circle cx="100" cy="80" r="32" fill="%236366F1"/><path d="M50 240 Q100 150 150 240" fill="%234338CA"/></svg>',
+      created_at: new Date(Date.now() - 30 * 86400 * 1000).toISOString(),
+    },
+    {
+      date: today,
+      label: 'Current Physique',
+      weight_kg: 73.8,
+      image_url: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="280" viewBox="0 0 200 280"><rect width="200" height="280" rx="24" fill="%23FFE4D9"/><circle cx="100" cy="80" r="32" fill="%23FF5C35"/><path d="M55 240 Q100 160 145 240" fill="%23E04A25"/></svg>',
+      created_at: new Date().toISOString(),
+    },
+  ]);
+
+  // Seed an initial compressed weekly snapshot to demonstrate the 2-tier backup set
+  await createWeeklySnapshot(`Weekly Baseline · ${shiftDate(today, -7)}`);
 }
