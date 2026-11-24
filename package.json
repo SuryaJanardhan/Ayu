@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eas:build:apk": "eas build -p android --profile preview",
+    "eas:build:android": "eas build -p android --profile production",
+    "eas:build:ios": "eas build -p ios --profile preview"
   },
   "dependencies": {
     "dexie": "^4.0.10",

@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Ayu",
+    "slug": "ayu",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF9F3"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.surya.ayu",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Ayu uses your camera to capture meal photos and progress check-in photos.",
+        "NSPhotoLibraryUsageDescription": "Ayu needs access to your photo library to attach meal photos and progress pictures."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFF9F3"
+      },
+      "package": "com.surya.ayu",
+      "permissions": [
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
+  }
+}
