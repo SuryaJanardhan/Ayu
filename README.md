@@ -2,18 +2,26 @@
 
 Ayu is a local-only, privacy-first personal health and fitness telemetry mobile application.
 
-## Key Principles
+## Core Features
 
-* **Local-Only & Private**: All data is stored in an embedded on-device SQLite database. Zero external servers required.
+* **Local-Only & Private**: All data is stored in an embedded on-device SQLite database. One-tap export and import of the entire database file for seamless backup.
 * **Modular Dashboard**: Dedicated cards for Nutrition, Workouts, Biometrics, and Sleep with instant drill-down.
-* **Smart Nutrition Intake**: Multimodal parsing (voice/photo via optional Gemini API key) with deterministic local caching. Repeated meals are resolved instantly from local storage.
-* **Pragmatic Workouts**: Lightweight logging focusing on activity type, duration, and RPE, with set and rep tracking for strength sessions.
-* **Biometric Synchronization**: Reads background metrics from native health systems (Apple HealthKit / Google Health Connect) with immediate manual override capabilities.
+* **Deterministic Nutrition Ingestion**:
+  * Exact-phrase matching: Previously logged meal phrases (e.g., "2 eggs on sourdough toast") resolve immediately from local cache with zero latency and zero API calls.
+  * AI-powered fallback: Unseen phrases parse via user's Gemini API key and save directly into the local cache for future deterministic reuse.
+  * Fixed targets with daily override: User sets baseline targets with the ability to override numbers for specific days (e.g., refeed or rest days).
+* **Workouts with Memory**:
+  * Template-based routine system (Push, Pull, Legs, Running, etc.).
+  * Automatically pre-fills weights and reps from the previous session for fast micro-adjustments.
+* **Biometric Synchronization**:
+  * Passive sync from Apple HealthKit and Google Health Connect for steps, sleep, and background calories.
+  * Explicit manual override priority: Manual entries always take precedence over phone hardware data.
+  * 7-day exponential moving average for body weight trend smoothing.
 
-## Architecture
+## Technology Stack
 
 * **Framework**: React Native with Expo and TypeScript
 * **Styling**: NativeWind (Tailwind CSS)
-* **Local Database**: Expo SQLite with type-safe schema migrations
-* **Key-Value Store**: MMKV / Expo SecureStore for fast config and API keys
-* **Telemetry Sync**: Native HealthKit and Google Health Connect bridge
+* **Local Database**: Expo SQLite with Drizzle ORM
+* **Storage & Keys**: MMKV and Expo SecureStore
+* **Health Integrations**: Apple HealthKit / Google Health Connect
