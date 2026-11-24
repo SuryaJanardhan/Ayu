@@ -4,29 +4,29 @@
 
 @layer base {
   body {
-    background-color: #06070a;
-    color: #f1f5f9;
+    background-color: #f1f5f9;
+    color: #0f172a;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Custom scrollbars for clean aesthetic */
+/* Custom scrollbars for clean minimal light aesthetic */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #090a0f;
+  background: #f8fafc;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1e2333;
+  background: #cbd5e1;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #2a324b;
+  background: #94a3b8;
 }
 
 .tabular-nums {

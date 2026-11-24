@@ -21,26 +21,24 @@ export const Header: React.FC<HeaderProps> = ({
   const isToday = currentDate === today;
 
   return (
-    <header className="sticky top-0 z-30 bg-obsidian-950/80 backdrop-blur-md border-b border-obsidian-700/60 px-4 py-3">
+    <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/90 px-4 py-3 shadow-[0_1px_2px_rgba(0,0,0,0.03)]">
       <div className="max-w-xl mx-auto flex items-center justify-between">
         {/* Brand */}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-accent-indigo via-accent-cyan to-accent-emerald flex items-center justify-center p-[1px]">
-            <div className="w-full h-full bg-obsidian-950 rounded-[7px] flex items-center justify-center">
-              <span className="font-bold text-sm tracking-wider text-white">AY</span>
-            </div>
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-brand-600 to-telemetry-indigo flex items-center justify-center shadow-sm">
+            <span className="font-extrabold text-sm tracking-tight text-white">AY</span>
           </div>
           <div>
-            <h1 className="text-base font-bold tracking-tight text-white leading-none">Ayu</h1>
-            <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400">Telemetry</span>
+            <h1 className="text-base font-extrabold tracking-tight text-slate-900 leading-none">Ayu</h1>
+            <span className="text-[10px] uppercase font-mono tracking-wider font-semibold text-slate-500">Telemetry</span>
           </div>
         </div>
 
         {/* Date Selector */}
-        <div className="flex items-center bg-obsidian-800 border border-obsidian-700/80 rounded-xl px-1 py-1">
+        <div className="flex items-center bg-slate-100 border border-slate-200/80 rounded-xl p-0.5">
           <button
             onClick={() => onDateChange(shiftDate(currentDate, -1))}
-            className="p-1 rounded-lg hover:bg-obsidian-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded-lg hover:bg-white text-slate-600 hover:text-slate-900 hover:shadow-xs transition-all"
             title="Previous Day"
           >
             <ChevronLeft size={16} />
@@ -48,10 +46,10 @@ export const Header: React.FC<HeaderProps> = ({
           
           <button
             onClick={() => onDateChange(today)}
-            className={`px-3 py-1 text-xs font-medium rounded-md transition-colors ${
+            className={`px-3 py-1 text-xs font-semibold rounded-lg transition-all ${
               isToday
-                ? 'bg-accent-indigo/20 text-accent-indigo border border-accent-indigo/30'
-                : 'text-slate-300 hover:text-white'
+                ? 'bg-white text-brand-600 shadow-xs border border-slate-200/60'
+                : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             {isToday ? 'Today' : formatDateDisplay(currentDate)}
@@ -59,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => onDateChange(shiftDate(currentDate, 1))}
-            className="p-1 rounded-lg hover:bg-obsidian-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1 rounded-lg hover:bg-white text-slate-600 hover:text-slate-900 hover:shadow-xs transition-all"
             title="Next Day"
           >
             <ChevronRight size={16} />
@@ -70,21 +68,21 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex items-center gap-1.5">
           <button
             onClick={onOpenTargetModal}
-            className="p-2 rounded-xl bg-obsidian-800 border border-obsidian-700/80 text-slate-300 hover:text-accent-amber hover:border-accent-amber/40 transition-colors"
+            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-telemetry-amber hover:border-amber-300 hover:bg-amber-50/50 shadow-xs transition-all"
             title="Daily Target Overrides"
           >
             <Sliders size={16} />
           </button>
           <button
             onClick={onOpenSettingsModal}
-            className="p-2 rounded-xl bg-obsidian-800 border border-obsidian-700/80 text-slate-300 hover:text-accent-cyan hover:border-accent-cyan/40 transition-colors"
+            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:text-brand-600 hover:border-blue-300 hover:bg-blue-50/50 shadow-xs transition-all"
             title="Database Backup & Settings"
           >
             <Database size={16} />
           </button>
           <button
             onClick={onResetSeed}
-            className="p-2 rounded-xl bg-obsidian-800 border border-obsidian-700/80 text-slate-400 hover:text-accent-emerald hover:border-accent-emerald/40 transition-colors"
+            className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-telemetry-emerald hover:border-emerald-300 hover:bg-emerald-50/50 shadow-xs transition-all"
             title="Reset Demo Data"
           >
             <RotateCcw size={16} />

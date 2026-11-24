@@ -50,7 +50,6 @@ export const BiometricsCard: React.FC<BiometricsCardProps> = ({
     onRefresh();
   };
 
-  // SVG Trendline generation
   const chartData = historicalWeights.slice(-7);
   const minWeight = Math.min(...chartData.map((d) => d.weight), 70);
   const maxWeight = Math.max(...chartData.map((d) => d.weight), 78);
@@ -75,16 +74,16 @@ export const BiometricsCard: React.FC<BiometricsCardProps> = ({
     .join(' ');
 
   return (
-    <div className="bg-obsidian-800/90 border border-obsidian-700/80 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-accent-cyan/10 border border-accent-cyan/20 text-accent-cyan">
+          <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-100 text-telemetry-sky">
             <Scale size={18} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold tracking-tight text-white">Body Biometrics</h2>
-            <span className="text-[11px] font-mono text-slate-400">7-Day Smoothed Trend</span>
+            <h2 className="text-sm font-bold tracking-tight text-slate-900">Body Biometrics</h2>
+            <span className="text-[11px] font-mono text-slate-500">7-Day Smoothed Trend</span>
           </div>
         </div>
 
@@ -96,11 +95,11 @@ export const BiometricsCard: React.FC<BiometricsCardProps> = ({
                 step="0.1"
                 value={weightInput}
                 onChange={(e) => setWeightInput(e.target.value)}
-                className="w-16 bg-obsidian-900 border border-accent-cyan rounded-lg px-2 py-1 text-xs text-white font-mono text-center focus:outline-none"
+                className="w-16 bg-white border border-brand-600 rounded-lg px-2 py-1 text-xs text-slate-900 font-mono font-bold text-center focus:outline-none shadow-xs"
               />
               <button
                 onClick={handleSaveWeight}
-                className="p-1 rounded-lg bg-accent-cyan text-obsidian-950 font-bold"
+                className="p-1 rounded-lg bg-brand-600 text-white font-bold shadow-xs hover:bg-brand-700"
               >
                 <Check size={14} />
               </button>
@@ -108,10 +107,10 @@ export const BiometricsCard: React.FC<BiometricsCardProps> = ({
           ) : (
             <div className="flex items-center gap-2">
               <div>
-                <div className="text-xl font-bold font-mono tracking-tight text-white tabular-nums">
+                <div className="text-xl font-extrabold font-mono tracking-tight text-slate-900 tabular-nums">
                   {currentWeight ? `${currentWeight.toFixed(1)} kg` : 'Unlogged'}
                 </div>
-                <span className="text-[10px] font-mono text-accent-cyan block">
+                <span className="text-[11px] font-mono font-semibold text-sky-700 block">
                   {currentAvg ? `7d Avg: ${currentAvg} kg` : '7d trend active'}
                 </span>
               </div>
@@ -120,7 +119,7 @@ export const BiometricsCard: React.FC<BiometricsCardProps> = ({
                   setWeightInput(currentWeight ? String(currentWeight) : '74.0');
                   setIsEditingWeight(true);
                 }}
-                className="p-1.5 rounded-lg bg-obsidian-900 hover:bg-obsidian-700 text-slate-400 hover:text-white transition-colors"
+                className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition-colors shadow-xs"
                 title="Log / Override Weight"
               >
                 <Edit3 size={13} />
@@ -132,50 +131,47 @@ export const BiometricsCard: React.FC<BiometricsCardProps> = ({
 
       {/* SVG Trendline Chart */}
       {chartData.length > 1 && (
-        <div className="mb-4 bg-obsidian-900/90 border border-obsidian-700/60 rounded-xl p-3">
-          <div className="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
+        <div className="mb-4 bg-slate-50 border border-slate-200 rounded-xl p-3">
+          <div className="flex items-center justify-between text-[10px] font-mono font-semibold text-slate-500 mb-1.5">
             <span className="flex items-center gap-1.5">
-              <span className="w-2.5 h-0.5 bg-accent-cyan rounded" /> Daily Weight
-              <span className="w-2.5 h-0.5 bg-accent-indigo rounded ml-2" /> 7d Moving Avg
+              <span className="w-2.5 h-0.5 bg-sky-500 rounded" /> Daily Weight
+              <span className="w-2.5 h-0.5 bg-indigo-600 rounded ml-2" /> 7d Moving Avg
             </span>
-            <span className="text-accent-emerald flex items-center gap-0.5">
-              <TrendingDown size={11} /> Trending Steady
+            <span className="text-emerald-700 font-bold flex items-center gap-0.5">
+              <TrendingDown size={12} /> Steady Progress
             </span>
           </div>
 
           <div className="relative w-full overflow-hidden">
             <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-16 overflow-visible">
-              {/* Daily raw weight path */}
               <path
                 d={rawPath}
                 fill="none"
-                stroke="#06b6d4"
+                stroke="#0284c7"
                 strokeWidth="1.5"
                 strokeDasharray="3 3"
-                opacity="0.7"
+                opacity="0.6"
               />
-              {/* 7-day smoothed moving average line */}
               <path
                 d={avgPath}
                 fill="none"
-                stroke="#6366f1"
+                stroke="#4f46e5"
                 strokeWidth="2.5"
                 strokeLinecap="round"
               />
-              {/* Data points */}
               {chartData.map((pt, idx) => (
                 <circle
                   key={idx}
                   cx={getX(idx)}
                   cy={getY(pt.weight)}
-                  r="2.5"
-                  className={idx === chartData.length - 1 ? 'fill-accent-cyan' : 'fill-slate-500'}
+                  r="3"
+                  className={idx === chartData.length - 1 ? 'fill-sky-600 stroke-white stroke-2' : 'fill-slate-400'}
                 />
               ))}
             </svg>
           </div>
 
-          <div className="flex justify-between text-[9px] font-mono text-slate-400 pt-1">
+          <div className="flex justify-between text-[9px] font-mono text-slate-500 pt-1.5 font-medium">
             {chartData.map((pt, i) => (
               <span key={i}>{pt.date.slice(8)}</span>
             ))}
@@ -185,29 +181,29 @@ export const BiometricsCard: React.FC<BiometricsCardProps> = ({
 
       {/* Native Health Data Telemetry */}
       <div className="grid grid-cols-2 gap-2">
-        <div className="bg-obsidian-900/80 border border-obsidian-700/60 rounded-xl p-2.5 flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-accent-amber/10 text-accent-amber">
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-amber-50 text-amber-700 border border-amber-100">
             <Footprints size={16} />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-400 uppercase block">Daily Steps</span>
-            <div className="text-sm font-bold font-mono text-white tabular-nums">
+            <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Daily Steps</span>
+            <div className="text-sm font-bold font-mono text-slate-900 tabular-nums">
               {biometrics?.steps ? biometrics.steps.toLocaleString() : '8,420'}
             </div>
-            <span className="text-[9px] text-slate-400 font-mono">Health Connect Sync</span>
+            <span className="text-[9px] text-slate-500 font-mono">Health Connect Sync</span>
           </div>
         </div>
 
-        <div className="bg-obsidian-900/80 border border-obsidian-700/60 rounded-xl p-2.5 flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-accent-rose/10 text-accent-rose">
+        <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 flex items-center gap-2.5">
+          <div className="p-2 rounded-lg bg-rose-50 text-rose-700 border border-rose-100">
             <Heart size={16} />
           </div>
           <div>
-            <span className="text-[10px] font-mono text-slate-400 uppercase block">Resting HR</span>
-            <div className="text-sm font-bold font-mono text-white tabular-nums">
+            <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 block">Resting HR</span>
+            <div className="text-sm font-bold font-mono text-slate-900 tabular-nums">
               {biometrics?.resting_hr || 60} bpm
             </div>
-            <span className="text-[9px] text-slate-400 font-mono">Sensors Active</span>
+            <span className="text-[9px] text-slate-500 font-mono">Sensors Active</span>
           </div>
         </div>
       </div>

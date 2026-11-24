@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, RotateCcw } from 'lucide-react';
+import { X, RotateCcw } from 'lucide-react';
 import { DailyTargets } from '../types';
 import { db } from '../db';
 
@@ -51,70 +51,70 @@ export const TargetOverrideModal: React.FC<TargetOverrideModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-obsidian-900 border border-obsidian-700 rounded-2xl p-5 shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
+      <div className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-base font-bold text-white">Target Overrides</h3>
-            <span className="text-xs font-mono text-slate-400">Date: {currentDate}</span>
+            <h3 className="text-base font-extrabold text-slate-900">Target Overrides</h3>
+            <span className="text-xs font-mono text-slate-500">Date: {currentDate}</span>
           </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-white">
+          <button onClick={onClose} className="p-1 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100">
             <X size={18} />
           </button>
         </div>
 
         <div className="space-y-3 mb-5">
           <div>
-            <label className="text-xs font-mono uppercase text-slate-400 block mb-1">
+            <label className="text-xs font-mono uppercase font-semibold text-slate-600 block mb-1">
               Daily Calories (kcal)
             </label>
             <input
               type="number"
               value={calories}
               onChange={(e) => setCalories(e.target.value)}
-              className="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl px-3 py-2 text-sm text-white font-mono"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 font-mono font-bold focus:bg-white focus:border-brand-600 focus:outline-none"
             />
           </div>
 
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Protein (g)</label>
+              <label className="text-[10px] font-mono uppercase font-semibold text-slate-600 block mb-1">Protein (g)</label>
               <input
                 type="number"
                 value={protein}
                 onChange={(e) => setProtein(e.target.value)}
-                className="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl px-2.5 py-2 text-xs text-white font-mono"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 text-xs text-slate-900 font-mono font-bold focus:bg-white focus:border-brand-600 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Carbs (g)</label>
+              <label className="text-[10px] font-mono uppercase font-semibold text-slate-600 block mb-1">Carbs (g)</label>
               <input
                 type="number"
                 value={carbs}
                 onChange={(e) => setCarbs(e.target.value)}
-                className="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl px-2.5 py-2 text-xs text-white font-mono"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 text-xs text-slate-900 font-mono font-bold focus:bg-white focus:border-brand-600 focus:outline-none"
               />
             </div>
             <div>
-              <label className="text-[10px] font-mono uppercase text-slate-400 block mb-1">Fats (g)</label>
+              <label className="text-[10px] font-mono uppercase font-semibold text-slate-600 block mb-1">Fats (g)</label>
               <input
                 type="number"
                 value={fat}
                 onChange={(e) => setFat(e.target.value)}
-                className="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl px-2.5 py-2 text-xs text-white font-mono"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl px-2.5 py-2 text-xs text-slate-900 font-mono font-bold focus:bg-white focus:border-brand-600 focus:outline-none"
               />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate-400 block mb-1">
+            <label className="text-xs font-mono uppercase font-semibold text-slate-600 block mb-1">
               Water Target (ml)
             </label>
             <input
               type="number"
               value={water}
               onChange={(e) => setWater(e.target.value)}
-              className="w-full bg-obsidian-950 border border-obsidian-700 rounded-xl px-3 py-2 text-sm text-white font-mono"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-sm text-slate-900 font-mono font-bold focus:bg-white focus:border-brand-600 focus:outline-none"
             />
           </div>
         </div>
@@ -123,7 +123,7 @@ export const TargetOverrideModal: React.FC<TargetOverrideModalProps> = ({
           {targets.is_override && (
             <button
               onClick={handleResetToDefault}
-              className="p-2.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 text-slate-300 text-xs flex items-center justify-center transition-colors"
+              className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs flex items-center justify-center transition-colors"
               title="Reset to baseline"
             >
               <RotateCcw size={16} />
@@ -131,7 +131,7 @@ export const TargetOverrideModal: React.FC<TargetOverrideModalProps> = ({
           )}
           <button
             onClick={() => handleSave(true)}
-            className="flex-1 py-2.5 bg-accent-amber hover:bg-amber-400 text-obsidian-950 font-bold rounded-xl text-xs transition-colors"
+            className="flex-1 py-2.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs transition-colors shadow-sm"
           >
             Save Target Override for Today
           </button>

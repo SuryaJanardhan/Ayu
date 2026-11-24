@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Utensils, Zap, Plus, Trash2, CheckCircle2, Sparkles } from 'lucide-react';
+import { Utensils, Zap, Plus, Trash2, CheckCircle2 } from 'lucide-react';
 import { MealLog, MealCacheItem, DailyTargets } from '../types';
 import { db } from '../db';
 import { normalizeMealPhrase } from '../utils/normalizer';
@@ -23,7 +23,6 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
   const [isLogging, setIsLogging] = useState(false);
   const [recentCacheItems, setRecentCacheItems] = useState<MealCacheItem[]>([]);
 
-  // Load frequent/recent cache items on mount
   useEffect(() => {
     db.meal_cache
       .orderBy('last_used_at')
@@ -33,7 +32,6 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
       .then(setRecentCacheItems);
   }, [logs]);
 
-  // Check phrase match on input change
   useEffect(() => {
     const normalized = normalizeMealPhrase(inputPhrase);
     if (!normalized) {
@@ -53,14 +51,17 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
       .then(setCacheSuggestions);
   }, [inputPhrase]);
 
-  // Aggregate daily totals
   const totalCalories = logs.reduce((sum, log) => sum + log.calories, 0);
   const totalProtein = logs.reduce((sum, log) => sum + log.protein_g, 0);
   const totalCarbs = logs.reduce((sum, log) => sum + log.carbs_g, 0);
   const totalFat = logs.reduce((sum, log) => sum + log.fat_g, 0);
 
-  const caloriePct = Math.min(Math.round((totalCalories / (targets.target_calories || 2200)) * 100), 100);
-  const proteinPct = Math.min(Math.round((totalProtein / (targets.target_protein_g || 160)) * 100), 100);
+  const targetCal = targets.target_calories || 2200;
+  const targetPro = targets.target_protein_g || 160;
+  const targetCarb = targets.target_carbs_g || 220;
+  const targetFat = targets.target_fat_g || 70;
+
+  const caloriePct = Math.min(Math.round((totalCalories / targetCal) * 100), 100);
 
   const handleLogMeal = async (overrideItem?: MealCacheItem) => {
     const itemToLog = overrideItem || exactMatch;
@@ -71,7 +72,6 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
     const normalized = normalizeMealPhrase(phrase);
 
     if (itemToLog) {
-      // Deterministic Cache Hit
       await db.meal_logs.add({
         date: currentDate,
         meal_type: 'lunch',
@@ -85,20 +85,17 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
         was_cached: true,
       });
 
-      // Increment hit count
       await db.meal_cache.update(itemToLog.normalized_phrase, {
         hit_count: (itemToLog.hit_count || 1) + 1,
         last_used_at: new Date().toISOString(),
       });
     } else {
-      // Cache Miss: Simulate deterministic parsing & save to cache
       const words = normalized.split(' ');
       const estCal = Math.max(180, words.length * 95);
       const estPro = Math.max(12, Math.round(estCal * 0.08));
       const estCarbs = Math.max(15, Math.round(estCal * 0.1));
       const estFat = Math.max(4, Math.round(estCal * 0.03));
 
-      // Save to cache for future 2nd-time deterministic lookup
       await db.meal_cache.put({
         normalized_phrase: normalized,
         display_name: phrase.trim(),
@@ -111,7 +108,6 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
         last_used_at: new Date().toISOString(),
       });
 
-      // Log meal
       await db.meal_logs.add({
         date: currentDate,
         meal_type: 'lunch',
@@ -139,83 +135,83 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
   };
 
   return (
-    <div className="bg-obsidian-800/90 border border-obsidian-700/80 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-accent-emerald/10 border border-accent-emerald/20 text-accent-emerald">
+          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-100 text-telemetry-emerald">
             <Utensils size={18} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold tracking-tight text-white">Nutrition & Diet</h2>
-            <span className="text-[11px] font-mono text-slate-400">
-              {targets.is_override ? 'Custom Day Target' : 'Standard Target'}
+            <h2 className="text-sm font-bold tracking-tight text-slate-900">Nutrition & Calories</h2>
+            <span className="text-[11px] font-mono text-slate-500">
+              {targets.is_override ? 'Custom Day Target' : 'Standard Budget'}
             </span>
           </div>
         </div>
         <div className="text-right">
-          <div className="text-xl font-bold font-mono tracking-tight text-white tabular-nums">
+          <div className="text-xl font-extrabold font-mono tracking-tight text-slate-900 tabular-nums">
             {totalCalories}
-            <span className="text-xs font-normal text-slate-400"> / {targets.target_calories} kcal</span>
+            <span className="text-xs font-normal text-slate-500"> / {targetCal} kcal</span>
           </div>
-          <span className="text-[10px] font-mono uppercase text-accent-emerald font-medium">
-            {targets.target_calories - totalCalories >= 0
-              ? `${targets.target_calories - totalCalories} kcal remaining`
-              : `${totalCalories - targets.target_calories} kcal surplus`}
+          <span className="text-[11px] font-mono font-semibold text-telemetry-emerald">
+            {targetCal - totalCalories >= 0
+              ? `${targetCal - totalCalories} kcal remaining`
+              : `${totalCalories - targetCal} kcal surplus`}
           </span>
         </div>
       </div>
 
-      {/* Progress Bars */}
+      {/* Calories Progress Bar */}
       <div className="space-y-3 mb-5">
         <div>
-          <div className="flex justify-between text-xs font-mono mb-1 text-slate-300">
-            <span>Calories Progress</span>
-            <span className="text-accent-amber font-semibold">{caloriePct}%</span>
+          <div className="flex justify-between text-xs font-mono mb-1 text-slate-600">
+            <span>Daily Intake Progress</span>
+            <span className="text-slate-900 font-bold">{caloriePct}%</span>
           </div>
-          <div className="h-2 w-full bg-obsidian-950 rounded-full overflow-hidden border border-obsidian-700/50">
+          <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/70">
             <div
-              className="h-full bg-gradient-to-r from-accent-amber to-accent-emerald transition-all duration-500 rounded-full"
+              className="h-full bg-gradient-to-r from-amber-500 to-emerald-500 transition-all duration-500 rounded-full"
               style={{ width: `${caloriePct}%` }}
             />
           </div>
         </div>
 
-        {/* Macros Breakdown Grid */}
+        {/* Macro Chips */}
         <div className="grid grid-cols-3 gap-2 pt-1">
-          <div className="bg-obsidian-900/90 border border-obsidian-700/50 rounded-xl p-2.5 text-center">
-            <span className="text-[10px] font-mono text-slate-400 uppercase">Protein</span>
-            <div className="text-sm font-bold font-mono text-accent-emerald tabular-nums">
+          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
+            <span className="text-[10px] font-mono font-semibold text-slate-500 uppercase">Protein</span>
+            <div className="text-sm font-bold font-mono text-emerald-700 tabular-nums">
               {totalProtein}g
             </div>
-            <span className="text-[10px] text-slate-500 font-mono">tgt {targets.target_protein_g}g</span>
+            <span className="text-[10px] text-slate-500 font-mono">tgt {targetPro}g</span>
           </div>
 
-          <div className="bg-obsidian-900/90 border border-obsidian-700/50 rounded-xl p-2.5 text-center">
-            <span className="text-[10px] font-mono text-slate-400 uppercase">Carbs</span>
-            <div className="text-sm font-bold font-mono text-accent-cyan tabular-nums">
+          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
+            <span className="text-[10px] font-mono font-semibold text-slate-500 uppercase">Carbs</span>
+            <div className="text-sm font-bold font-mono text-sky-700 tabular-nums">
               {totalCarbs}g
             </div>
-            <span className="text-[10px] text-slate-500 font-mono">tgt {targets.target_carbs_g}g</span>
+            <span className="text-[10px] text-slate-500 font-mono">tgt {targetCarb}g</span>
           </div>
 
-          <div className="bg-obsidian-900/90 border border-obsidian-700/50 rounded-xl p-2.5 text-center">
-            <span className="text-[10px] font-mono text-slate-400 uppercase">Fats</span>
-            <div className="text-sm font-bold font-mono text-accent-rose tabular-nums">
+          <div className="bg-slate-50 border border-slate-200/80 rounded-xl p-2.5 text-center">
+            <span className="text-[10px] font-mono font-semibold text-slate-500 uppercase">Fats</span>
+            <div className="text-sm font-bold font-mono text-rose-700 tabular-nums">
               {totalFat}g
             </div>
-            <span className="text-[10px] text-slate-500 font-mono">tgt {targets.target_fat_g}g</span>
+            <span className="text-[10px] text-slate-500 font-mono">tgt {targetFat}g</span>
           </div>
         </div>
       </div>
 
-      {/* Exact-Phrase Ingestion Input */}
+      {/* Input Field with Ingestion Preview */}
       <div className="mb-4">
-        <label className="block text-[11px] font-mono uppercase text-slate-400 mb-1.5 flex items-center justify-between">
-          <span>Log Meal (Natural Language / Exact Phrase)</span>
+        <label className="block text-[11px] font-mono uppercase font-semibold text-slate-500 mb-1.5 flex items-center justify-between">
+          <span>Log Meal (Natural Language Phrase)</span>
           {exactMatch && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-accent-emerald font-semibold">
-              <CheckCircle2 size={12} /> Deterministic Cache (0ms)
+            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+              <CheckCircle2 size={11} /> Deterministic Cache (0ms)
             </span>
           )}
         </label>
@@ -228,41 +224,41 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
               if (e.key === 'Enter') handleLogMeal();
             }}
             placeholder="e.g. 2 eggs on sourdough toast"
-            className="w-full bg-obsidian-900 border border-obsidian-700/90 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-accent-emerald focus:ring-1 focus:ring-accent-emerald transition-all"
+            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 transition-all font-medium"
           />
           <button
             onClick={() => handleLogMeal()}
             disabled={!inputPhrase.trim() || isLogging}
-            className="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-accent-emerald/20 hover:bg-accent-emerald text-accent-emerald hover:text-obsidian-950 rounded-lg text-xs font-semibold flex items-center gap-1 transition-all disabled:opacity-40"
+            className="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition-all shadow-xs disabled:opacity-40"
           >
             {exactMatch ? <Zap size={14} /> : <Plus size={14} />}
             <span>Log</span>
           </button>
         </div>
 
-        {/* Exact Match Preview or Suggestions */}
+        {/* Exact Match Preview */}
         {exactMatch ? (
-          <div className="mt-2 p-2.5 bg-accent-emerald/10 border border-accent-emerald/30 rounded-xl flex items-center justify-between text-xs">
+          <div className="mt-2 p-2.5 bg-emerald-50/80 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
-              <Zap size={14} className="text-accent-emerald" />
-              <span className="text-slate-200 font-medium">{exactMatch.display_name}</span>
+              <Zap size={14} className="text-emerald-600" />
+              <span className="text-slate-900 font-semibold">{exactMatch.display_name}</span>
             </div>
-            <div className="font-mono text-slate-300">
-              <span className="text-white font-bold">{exactMatch.calories}</span> kcal |{' '}
-              <span className="text-accent-emerald font-semibold">{exactMatch.protein_g}g P</span>
+            <div className="font-mono text-slate-700">
+              <span className="text-slate-900 font-bold">{exactMatch.calories}</span> kcal |{' '}
+              <span className="text-emerald-700 font-bold">{exactMatch.protein_g}g P</span>
             </div>
           </div>
         ) : inputPhrase.trim().length > 2 && cacheSuggestions.length > 0 ? (
           <div className="mt-2 space-y-1">
-            <span className="text-[10px] font-mono text-slate-400">Cached Matches:</span>
+            <span className="text-[10px] font-mono font-semibold text-slate-500">Cached Suggestions:</span>
             {cacheSuggestions.map((s) => (
               <button
                 key={s.normalized_phrase}
                 onClick={() => handleLogMeal(s)}
-                className="w-full text-left p-2 rounded-lg bg-obsidian-900/60 hover:bg-obsidian-900 border border-obsidian-700/40 flex items-center justify-between text-xs transition-colors"
+                className="w-full text-left p-2 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 flex items-center justify-between text-xs transition-colors"
               >
-                <span className="text-slate-300">{s.display_name}</span>
-                <span className="font-mono text-slate-400">{s.calories} kcal ({s.protein_g}g P)</span>
+                <span className="text-slate-800 font-medium">{s.display_name}</span>
+                <span className="font-mono text-slate-600">{s.calories} kcal ({s.protein_g}g P)</span>
               </button>
             ))}
           </div>
@@ -272,7 +268,7 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
       {/* Quick Recent Presets */}
       {recentCacheItems.length > 0 && (
         <div className="mb-4">
-          <span className="text-[10px] font-mono uppercase text-slate-400 mb-1.5 block">
+          <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 mb-1.5 block">
             Frequent Meals (1-Tap Log)
           </span>
           <div className="flex flex-wrap gap-1.5">
@@ -280,11 +276,11 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
               <button
                 key={item.normalized_phrase}
                 onClick={() => handleLogMeal(item)}
-                className="px-2.5 py-1 rounded-lg bg-obsidian-900 hover:bg-obsidian-700/80 border border-obsidian-700/50 text-[11px] text-slate-300 hover:text-white flex items-center gap-1.5 transition-colors"
+                className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200/80 text-[11px] text-slate-700 hover:text-slate-900 font-medium flex items-center gap-1.5 transition-colors"
               >
-                <Zap size={10} className="text-accent-emerald" />
+                <Zap size={11} className="text-emerald-600" />
                 <span>{item.display_name}</span>
-                <span className="font-mono text-slate-400">({item.calories})</span>
+                <span className="font-mono text-slate-500 font-normal">({item.calories})</span>
               </button>
             ))}
           </div>
@@ -293,11 +289,11 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
 
       {/* Today's Logged Meals */}
       <div>
-        <span className="text-[10px] font-mono uppercase text-slate-400 mb-2 block">
-          Today's Recorded Intake ({logs.length})
+        <span className="text-[10px] font-mono uppercase font-semibold text-slate-500 mb-2 block">
+          Today's Logged Meals ({logs.length})
         </span>
         {logs.length === 0 ? (
-          <div className="p-4 text-center border border-dashed border-obsidian-700 rounded-xl text-xs text-slate-400">
+          <div className="p-4 text-center border border-dashed border-slate-200 rounded-xl text-xs text-slate-500">
             No meals logged for this date. Enter a phrase above to track.
           </div>
         ) : (
@@ -305,33 +301,33 @@ export const NutritionCard: React.FC<NutritionCardProps> = ({
             {logs.map((log) => (
               <div
                 key={log.id}
-                className="p-2.5 bg-obsidian-900/80 border border-obsidian-700/60 rounded-xl flex items-center justify-between text-xs"
+                className="p-2.5 bg-slate-50 border border-slate-200/80 rounded-xl flex items-center justify-between text-xs hover:bg-slate-100/50 transition-colors"
               >
                 <div className="flex items-center gap-2">
                   <div
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      log.was_cached ? 'bg-accent-emerald' : 'bg-accent-cyan'
+                    className={`w-2 h-2 rounded-full ${
+                      log.was_cached ? 'bg-emerald-500' : 'bg-brand-500'
                     }`}
                   />
                   <div>
-                    <div className="font-medium text-slate-200">{log.display_name}</div>
-                    <div className="text-[10px] font-mono text-slate-400">
-                      {log.was_cached ? 'Deterministic Cache' : 'Dynamic Log'}
+                    <div className="font-semibold text-slate-900">{log.display_name}</div>
+                    <div className="text-[10px] font-mono text-slate-500">
+                      {log.was_cached ? 'Deterministic Cache' : 'Dynamic Entry'}
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <div className="text-right font-mono">
-                    <span className="text-white font-semibold">{log.calories} kcal</span>
-                    <span className="text-slate-400 text-[11px] block">{log.protein_g}g P</span>
+                    <span className="text-slate-900 font-bold">{log.calories} kcal</span>
+                    <span className="text-emerald-700 text-[11px] font-semibold block">{log.protein_g}g P</span>
                   </div>
                   <button
                     onClick={() => handleDeleteMeal(log.id)}
-                    className="p-1 rounded-md text-slate-500 hover:text-accent-rose hover:bg-obsidian-800 transition-colors"
+                    className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                     title="Delete entry"
                   >
-                    <Trash2 size={13} />
+                    <Trash2 size={14} />
                   </button>
                 </div>
               </div>

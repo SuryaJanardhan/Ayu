@@ -40,30 +40,30 @@ export const HydrationCard: React.FC<HydrationCardProps> = ({
   };
 
   return (
-    <div className="bg-obsidian-800/90 border border-obsidian-700/80 rounded-2xl p-5 shadow-lg backdrop-blur-sm">
+    <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-sm">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-accent-cyan/10 border border-accent-cyan/20 text-accent-cyan">
+          <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-100 text-telemetry-sky">
             <Droplets size={18} />
           </div>
           <div>
-            <h2 className="text-sm font-semibold tracking-tight text-white">Daily Hydration</h2>
-            <span className="text-[11px] font-mono text-slate-400">Target {targetWater} ml</span>
+            <h2 className="text-sm font-bold tracking-tight text-slate-900">Daily Hydration</h2>
+            <span className="text-[11px] font-mono text-slate-500">Target {targetWater} ml</span>
           </div>
         </div>
 
         <div className="text-right">
-          <div className="text-xl font-bold font-mono tracking-tight text-white tabular-nums">
+          <div className="text-xl font-extrabold font-mono tracking-tight text-slate-900 tabular-nums">
             {currentWater}
-            <span className="text-xs font-normal text-slate-400"> / {targetWater} ml</span>
+            <span className="text-xs font-normal text-slate-500"> / {targetWater} ml</span>
           </div>
-          <span className="text-[10px] font-mono text-accent-cyan font-medium">{pct}% completed</span>
+          <span className="text-[11px] font-mono font-semibold text-sky-700">{pct}% completed</span>
         </div>
       </div>
 
-      <div className="h-2 w-full bg-obsidian-950 rounded-full overflow-hidden border border-obsidian-700/50 mb-4">
+      <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden border border-slate-200/70 mb-4">
         <div
-          className="h-full bg-accent-cyan transition-all duration-500 rounded-full"
+          className="h-full bg-sky-500 transition-all duration-500 rounded-full"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -72,21 +72,21 @@ export const HydrationCard: React.FC<HydrationCardProps> = ({
       <div className="grid grid-cols-3 gap-2">
         <button
           onClick={() => handleAddWater(250)}
-          className="py-2 bg-obsidian-900 hover:bg-obsidian-700/70 border border-obsidian-700/60 rounded-xl text-xs font-mono text-slate-300 hover:text-accent-cyan flex items-center justify-center gap-1 transition-colors"
+          className="py-2.5 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded-xl text-xs font-mono font-bold text-slate-700 hover:text-sky-800 flex items-center justify-center gap-1 transition-colors shadow-xs"
         >
           <Plus size={12} />
           <span>+250 ml</span>
         </button>
         <button
           onClick={() => handleAddWater(500)}
-          className="py-2 bg-obsidian-900 hover:bg-obsidian-700/70 border border-obsidian-700/60 rounded-xl text-xs font-mono text-slate-300 hover:text-accent-cyan flex items-center justify-center gap-1 transition-colors"
+          className="py-2.5 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded-xl text-xs font-mono font-bold text-slate-700 hover:text-sky-800 flex items-center justify-center gap-1 transition-colors shadow-xs"
         >
           <Plus size={12} />
           <span>+500 ml</span>
         </button>
         <button
           onClick={() => handleAddWater(750)}
-          className="py-2 bg-obsidian-900 hover:bg-obsidian-700/70 border border-obsidian-700/60 rounded-xl text-xs font-mono text-slate-300 hover:text-accent-cyan flex items-center justify-center gap-1 transition-colors"
+          className="py-2.5 bg-slate-50 hover:bg-sky-50 border border-slate-200 hover:border-sky-300 rounded-xl text-xs font-mono font-bold text-slate-700 hover:text-sky-800 flex items-center justify-center gap-1 transition-colors shadow-xs"
         >
           <Plus size={12} />
           <span>+750 ml</span>
