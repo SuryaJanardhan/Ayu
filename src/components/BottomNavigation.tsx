@@ -19,9 +19,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       {/* Home */}
       <button
         onClick={() => onTabChange('home')}
-        className={`flex flex-col items-center gap-1 transition-colors ${
-          activeTab === 'home' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-        }`}
+        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'home' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
+          }`}
       >
         <Home size={20} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
         <span className="text-[10px] tracking-tight">Home</span>
@@ -30,9 +29,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       {/* Meals */}
       <button
         onClick={() => onTabChange('meals')}
-        className={`flex flex-col items-center gap-1 transition-colors ${
-          activeTab === 'meals' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-        }`}
+        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'meals' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
+          }`}
       >
         <UtensilsCrossed size={20} strokeWidth={activeTab === 'meals' ? 2.5 : 2} />
         <span className="text-[10px] tracking-tight">Meals</span>
@@ -50,9 +48,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       {/* Train */}
       <button
         onClick={() => onTabChange('train')}
-        className={`flex flex-col items-center gap-1 transition-colors ${
-          activeTab === 'train' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-        }`}
+        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'train' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
+          }`}
       >
         <Dumbbell size={20} strokeWidth={activeTab === 'train' ? 2.5 : 2} />
         <span className="text-[10px] tracking-tight">Train</span>
@@ -61,9 +58,8 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
       {/* Progress */}
       <button
         onClick={() => onTabChange('progress')}
-        className={`flex flex-col items-center gap-1 transition-colors ${
-          activeTab === 'progress' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-        }`}
+        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'progress' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
+          }`}
       >
         <TrendingUp size={20} strokeWidth={activeTab === 'progress' ? 2.5 : 2} />
         <span className="text-[10px] tracking-tight">Progress</span>
