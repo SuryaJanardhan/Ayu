@@ -12,7 +12,7 @@ try {
 export default function App() {
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFF9F3" />
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF9F3" translucent={false} />
       <WebView
         originWhitelist={['*']}
         source={{ html: htmlBundle, baseUrl: 'https://ayu.local' }}
@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#FFF9F3',
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight || 0 : 0,
   },
   webview: {
     flex: 1,

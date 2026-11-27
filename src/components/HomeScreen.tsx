@@ -1,38 +1,32 @@
 import React from 'react';
-import { Footprints, Moon, Heart, ChevronLeft, ChevronRight, Sliders, Database, Check, Edit3 } from 'lucide-react';
+import { Footprints, Moon, Heart, Check, Edit3, ChevronRight } from 'lucide-react';
 import { DailyTargets, MealLog, DailyBiometrics } from '../types';
-import { formatDateDisplay, getTodayDateString, shiftDate } from '../utils/date';
+import { formatDateDisplay } from '../utils/date';
 import { db } from '../db';
 
 interface HomeScreenProps {
   currentDate: string;
-  onDateChange: (d: string) => void;
   targets: DailyTargets;
   mealLogs: MealLog[];
   biometrics?: DailyBiometrics;
   historicalWeights: { date: string; weight: number; moving_avg: number }[];
-  onOpenTargets: () => void;
-  onOpenSettings: () => void;
   onOpenEditBiometrics: () => void;
   onNavigateMeals: () => void;
+  onNavigateProgress: () => void;
   onRefresh: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
   currentDate,
-  onDateChange,
   targets,
   mealLogs,
   biometrics,
   historicalWeights,
-  onOpenTargets,
-  onOpenSettings,
   onOpenEditBiometrics,
   onNavigateMeals,
+  onNavigateProgress,
   onRefresh,
 }) => {
-  const today = getTodayDateString();
-  const isToday = currentDate === today;
 
   const totalCalories = mealLogs.reduce((sum, m) => sum + m.calories, 0);
   const totalProtein = mealLogs.reduce((sum, m) => sum + m.protein_g, 0);
@@ -79,60 +73,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
 
   return (
     <div className="flex flex-col gap-3.5 pb-2">
-      {/* Top Greeting Header Personalized to Surya */}
-      <div className="flex justify-between items-center px-1">
-        <div>
-          <small className="text-ink-mute text-xs block font-medium">
-            {formatDateDisplay(currentDate)}
-          </small>
-          <b className="text-xl font-bold tracking-tight text-ink">Hi Surya</b>
-        </div>
-
-        <div className="flex items-center gap-2">
-          {/* Date switcher pill */}
-          <div className="flex items-center bg-white border border-cream-200 rounded-full px-1.5 py-0.5 shadow-xs">
-            <button
-              onClick={() => onDateChange(shiftDate(currentDate, -1))}
-              className="p-1 text-ink-mute hover:text-ink"
-              title="Previous Day"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span className="text-[11px] font-semibold text-ink px-1.5">
-              {isToday ? 'Today' : currentDate.slice(5)}
-            </span>
-            <button
-              onClick={() => onDateChange(shiftDate(currentDate, 1))}
-              className="p-1 text-ink-mute hover:text-ink"
-              title="Next Day"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-
-          <button
-            onClick={onOpenTargets}
-            className="p-2 rounded-full bg-white border border-cream-200 text-ink-mute hover:text-coral shadow-xs transition-colors"
-            title="Targets"
-          >
-            <Sliders size={14} />
-          </button>
-          <button
-            onClick={onOpenSettings}
-            className="p-2 rounded-full bg-white border border-cream-200 text-ink-mute hover:text-sky shadow-xs transition-colors"
-            title="Settings & Backup"
-          >
-            <Database size={14} />
-          </button>
-
-          <div
-            onClick={onOpenEditBiometrics}
-            className="w-9 h-9 rounded-full bg-coral text-white font-bold flex items-center justify-center text-xs shadow-xs cursor-pointer hover:opacity-90"
-            title="Surya - Tap to Edit Profile / Telemetry"
-          >
-            SU
-          </div>
-        </div>
+      {/* Greeting */}
+      <div className="flex items-baseline justify-between px-1">
+        <b className="text-xl font-bold tracking-tight text-ink">Hi Surya</b>
+        <small className="text-ink-mute text-xs font-medium">
+          {formatDateDisplay(currentDate)}
+        </small>
       </div>
 
       {/* Main Energy & Ring Card (Clickable to jump to Meals) */}
@@ -247,46 +193,51 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </div>
 
-      {/* Telemetry Chips (Clickable to Edit/Override) */}
-      <div className="grid grid-cols-3 gap-2">
-        <button
-          onClick={onOpenEditBiometrics}
-          className="bg-sun-light hover:opacity-90 rounded-2xl p-3 text-center flex flex-col items-center justify-center transition-all"
-        >
-          <div className="text-sun font-bold mb-0.5">
-            <Footprints size={18} />
+      {/* Unified Vitals Card (Single Edit Trigger) */}
+      <div className="bg-white rounded-3xl p-3.5 border border-cream-200 shadow-card">
+        <div className="flex items-center justify-between mb-2.5 px-1">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute">
+            Daily Vitals
+          </span>
+          <button
+            onClick={onOpenEditBiometrics}
+            className="flex items-center gap-1 text-[11px] font-bold text-coral hover:opacity-80 transition-opacity"
+          >
+            <Edit3 size={12} />
+            <span>Edit</span>
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-sun-light rounded-2xl p-2.5 text-center flex flex-col items-center justify-center">
+            <div className="text-sun font-bold mb-0.5">
+              <Footprints size={16} />
+            </div>
+            <b className="text-sm font-extrabold text-ink leading-tight tabular-nums">
+              {biometrics?.steps ? `${(biometrics.steps / 1000).toFixed(1)}k` : '9.5k'}
+            </b>
+            <span className="text-[10px] text-ink-mute font-medium">steps</span>
           </div>
-          <b className="text-base font-extrabold text-ink leading-tight tabular-nums">
-            {biometrics?.steps ? `${(biometrics.steps / 1000).toFixed(1)}k` : '9.5k'}
-          </b>
-          <span className="text-[10px] text-ink-mute font-medium">steps</span>
-        </button>
 
-        <button
-          onClick={onOpenEditBiometrics}
-          className="bg-coral-light hover:opacity-90 rounded-2xl p-3 text-center flex flex-col items-center justify-center transition-all"
-        >
-          <div className="text-coral font-bold mb-0.5">
-            <Moon size={18} />
+          <div className="bg-coral-light rounded-2xl p-2.5 text-center flex flex-col items-center justify-center">
+            <div className="text-coral font-bold mb-0.5">
+              <Moon size={16} />
+            </div>
+            <b className="text-sm font-extrabold text-ink leading-tight tabular-nums">
+              {biometrics?.sleep_hours ? `${biometrics.sleep_hours}h` : '7.4h'}
+            </b>
+            <span className="text-[10px] text-ink-mute font-medium">sleep</span>
           </div>
-          <b className="text-base font-extrabold text-ink leading-tight tabular-nums">
-            {biometrics?.sleep_hours ? `${biometrics.sleep_hours}h` : '7.4h'}
-          </b>
-          <span className="text-[10px] text-ink-mute font-medium">sleep</span>
-        </button>
 
-        <button
-          onClick={onOpenEditBiometrics}
-          className="bg-rose-light hover:opacity-90 rounded-2xl p-3 text-center flex flex-col items-center justify-center transition-all"
-        >
-          <div className="text-rose font-bold mb-0.5">
-            <Heart size={18} />
+          <div className="bg-rose-light rounded-2xl p-2.5 text-center flex flex-col items-center justify-center">
+            <div className="text-rose font-bold mb-0.5">
+              <Heart size={16} />
+            </div>
+            <b className="text-sm font-extrabold text-ink leading-tight tabular-nums">
+              {biometrics?.resting_hr || 60}
+            </b>
+            <span className="text-[10px] text-ink-mute font-medium">bpm</span>
           </div>
-          <b className="text-base font-extrabold text-ink leading-tight tabular-nums">
-            {biometrics?.resting_hr || 60}
-          </b>
-          <span className="text-[10px] text-ink-mute font-medium">bpm</span>
-        </button>
+        </div>
       </div>
 
       {/* Water Hydration Card */}
@@ -319,18 +270,15 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </div>
 
-      {/* Weight Summary Sparkline Card (With Direct Edit Button) */}
-      <div className="bg-white rounded-3xl p-4 border border-cream-200 shadow-card flex justify-between items-center">
+      {/* Weight Summary Sparkline Card (Navigates to Stats) */}
+      <button
+        onClick={onNavigateProgress}
+        className="w-full text-left bg-white rounded-3xl p-4 border border-cream-200 shadow-card flex justify-between items-center hover:border-coral/60 transition-colors"
+      >
         <div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <b className="text-sm font-bold text-ink block">Weight {currentWeight} kg</b>
-            <button
-              onClick={onOpenEditBiometrics}
-              className="p-1 rounded-md text-ink-mute hover:text-coral hover:bg-cream-100 transition-colors"
-              title="Edit Weight / Biometrics"
-            >
-              <Edit3 size={13} />
-            </button>
+            <ChevronRight size={14} className="text-ink-mute" />
           </div>
           <small className="text-ink-mute text-xs font-medium">
             7-day avg {currentAvg} kg ↓
@@ -346,7 +294,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             strokeLinecap="round"
           />
         </svg>
-      </div>
+      </button>
     </div>
   );
 };

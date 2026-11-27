@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Trash2, Plus, Coffee, Utensils, Apple, Sandwich, Edit3 } from 'lucide-react';
+import { Trash2, Coffee, Utensils, Apple, Sandwich, Edit3 } from 'lucide-react';
 import { MealLog } from '../types';
 import { db } from '../db';
 import { normalizeMealPhrase } from '../utils/normalizer';
@@ -152,15 +152,6 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
           </div>
         )}
       </div>
-
-      {/* Add Meal CTA */}
-      <button
-        onClick={onOpenQuickSnap}
-        className="w-full py-3.5 rounded-2xl border-2 border-dashed border-cream-200 hover:border-coral bg-white text-ink-mute hover:text-coral font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-xs"
-      >
-        <Plus size={16} />
-        <span>Tap + to log meal or snap photo</span>
-      </button>
 
       {/* Edit Modal */}
       {editingMeal && (

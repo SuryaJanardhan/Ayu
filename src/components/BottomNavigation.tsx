@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, UtensilsCrossed, Plus, Dumbbell, TrendingUp } from 'lucide-react';
+import { Home, UtensilsCrossed, Plus, Dumbbell, TrendingUp, LucideIcon } from 'lucide-react';
 
 export type TabType = 'home' | 'meals' | 'train' | 'progress';
 
@@ -9,61 +9,55 @@ interface BottomNavigationProps {
   onOpenQuickSnap: () => void;
 }
 
+const TABS: { id: TabType; label: string; icon: LucideIcon }[] = [
+  { id: 'home', label: 'Home', icon: Home },
+  { id: 'meals', label: 'Meals', icon: UtensilsCrossed },
+  { id: 'train', label: 'Train', icon: Dumbbell },
+  { id: 'progress', label: 'Stats', icon: TrendingUp },
+];
+
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   activeTab,
   onTabChange,
   onOpenQuickSnap,
 }) => {
   return (
-    <nav className="sticky bottom-0 z-30 bg-white border-t border-cream-200 px-4 py-2 flex items-center justify-around shadow-[0_-4px_16px_rgba(26,16,51,0.03)]">
-      {/* Home */}
-      <button
-        onClick={() => onTabChange('home')}
-        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'home' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-          }`}
-      >
-        <Home size={20} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
-        <span className="text-[10px] tracking-tight">Home</span>
-      </button>
+    <div className="shrink-0 z-30 px-3 pb-3 pt-1.5 bg-gradient-to-t from-cream-100 via-cream-100/95 to-transparent">
+      <div className="flex items-center gap-2.5">
+        {/* Floating White & Coral Pill Dock */}
+        <nav
+          aria-label="Primary navigation"
+          className="flex-1 bg-white/95 backdrop-blur-md border border-cream-200 rounded-full p-1.5 flex items-center justify-between shadow-[0_8px_24px_rgba(26,16,51,0.08)]"
+        >
+          {TABS.map(({ id, label, icon: Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => onTabChange(id)}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-2 rounded-full transition-all duration-200 ${
+                  isActive
+                    ? 'bg-coral text-white font-bold shadow-[0_4px_12px_rgba(255,92,53,0.28)]'
+                    : 'text-ink-mute hover:text-ink font-medium'
+                }`}
+              >
+                <Icon size={17} strokeWidth={isActive ? 2.5 : 2} />
+                {isActive && <span className="text-[11px] tracking-tight">{label}</span>}
+              </button>
+            );
+          })}
+        </nav>
 
-      {/* Meals */}
-      <button
-        onClick={() => onTabChange('meals')}
-        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'meals' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-          }`}
-      >
-        <UtensilsCrossed size={20} strokeWidth={activeTab === 'meals' ? 2.5 : 2} />
-        <span className="text-[10px] tracking-tight">Meals</span>
-      </button>
-
-      {/* Center Floating Action Button (FAB) */}
-      <button
-        onClick={onOpenQuickSnap}
-        className="w-12 h-12 rounded-full bg-coral hover:bg-coral-hover text-white flex items-center justify-center -mt-6 shadow-fab active:scale-95 transition-all"
-        title="Snap Meal or Quick Log"
-      >
-        <Plus size={26} strokeWidth={2.8} />
-      </button>
-
-      {/* Train */}
-      <button
-        onClick={() => onTabChange('train')}
-        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'train' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-          }`}
-      >
-        <Dumbbell size={20} strokeWidth={activeTab === 'train' ? 2.5 : 2} />
-        <span className="text-[10px] tracking-tight">Train</span>
-      </button>
-
-      {/* Progress */}
-      <button
-        onClick={() => onTabChange('progress')}
-        className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'progress' ? 'text-coral font-bold' : 'text-ink-mute hover:text-ink'
-          }`}
-      >
-        <TrendingUp size={20} strokeWidth={activeTab === 'progress' ? 2.5 : 2} />
-        <span className="text-[10px] tracking-tight">Progress</span>
-      </button>
-    </nav>
+        {/* Detached Coral Quick Snap Button */}
+        <button
+          onClick={onOpenQuickSnap}
+          className="w-12 h-12 rounded-full bg-coral hover:bg-coral-hover text-white flex items-center justify-center shadow-fab active:scale-95 transition-all shrink-0"
+          title="Snap Meal or Quick Log"
+          aria-label="Quick log meal"
+        >
+          <Plus size={24} strokeWidth={2.8} />
+        </button>
+      </div>
+    </div>
   );
 };
