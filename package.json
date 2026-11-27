@@ -11,11 +11,14 @@
     "test": "vitest run",
     "eas:build:apk": "npx --yes eas-cli build -p android --profile preview",
     "eas:build:android": "npx --yes eas-cli build -p android --profile production",
-    "eas:build:ios": "npx --yes eas-cli build -p ios --profile preview"
+    "eas:build:ios": "npx --yes eas-cli build -p ios --profile preview",
+    "eas:update:preview": "npm run build && npx --yes eas-cli update --channel preview",
+    "eas:update:production": "npm run build && npx --yes eas-cli update --channel production"
   },
   "dependencies": {
     "dexie": "^4.0.10",
     "expo": "~51.0.39",
+    "expo-updates": "~0.25.28",
     "graphql": "^17.1.0",
     "lucide-react": "^0.468.0",
     "react": "18.2.0",
