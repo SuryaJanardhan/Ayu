@@ -1,7 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { StyleSheet, SafeAreaView, StatusBar } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { StyleSheet, SafeAreaView, StatusBar, Animated, Image, Text } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Pedometer } from 'expo-sensors';
+
+const yogiImage = require('./assets/InShot_20261128_153518789.png');
 
 let htmlBundle = '';
 try {
@@ -13,6 +15,25 @@ try {
 export default function App() {
   const webViewRef = useRef(null);
   const lastStepCountRef = useRef(0);
+  const [splashHidden, setSplashHidden] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const dismissedRef = useRef(false);
+
+  const dismissSplash = () => {
+    if (dismissedRef.current) return;
+    dismissedRef.current = true;
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => setSplashHidden(true));
+  };
+
+  useEffect(() => {
+    // Safety fallback in case onLoadEnd is delayed
+    const safetyTimer = setTimeout(dismissSplash, 2500);
+    return () => clearTimeout(safetyTimer);
+  }, []);
 
   useEffect(() => {
     let subscription = null;
@@ -55,6 +76,7 @@ export default function App() {
         ref={webViewRef}
         originWhitelist={['*']}
         source={{ html: htmlBundle, baseUrl: 'https://ayu.local' }}
+        onLoadEnd={dismissSplash}
         javaScriptEnabled={true}
         domStorageEnabled={true}
         allowFileAccess={true}
@@ -65,6 +87,12 @@ export default function App() {
         showsHorizontalScrollIndicator={false}
         style={styles.webview}
       />
+      {!splashHidden && (
+        <Animated.View pointerEvents="none" style={[styles.splashOverlay, { opacity: fadeAnim }]}>
+          <Image source={yogiImage} style={styles.splashImg} resizeMode="contain" />
+          <Text style={styles.splashTitle}>Ayu</Text>
+        </Animated.View>
+      )}
     </SafeAreaView>
   );
 }
@@ -77,5 +105,23 @@ const styles = StyleSheet.create({
   webview: {
     flex: 1,
     backgroundColor: '#FFF9F3',
+  },
+  splashOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#FFF9F3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  splashImg: {
+    width: 140,
+    height: 140,
+  },
+  splashTitle: {
+    marginTop: 8,
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#1A1033',
+    letterSpacing: -0.5,
   },
 });
