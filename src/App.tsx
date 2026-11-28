@@ -11,7 +11,6 @@ import { WorkoutSessionModal } from './components/WorkoutSessionModal';
 import { SettingsModal } from './components/SettingsModal';
 import { EditBiometricsModal } from './components/EditBiometricsModal';
 import { EditHubModal, EditHubSection } from './components/EditHubModal';
-import { SplashScreen } from './components/SplashScreen';
 import { db } from './db';
 import { initializeDatabaseSeed } from './db/seed';
 import { getTodayDateString, shiftDate } from './utils/date';
@@ -25,7 +24,6 @@ import {
 } from './types';
 
 export const App: React.FC = () => {
-  const [showSplash, setShowSplash] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>('home');
   const [currentDate, setCurrentDate] = useState<string>(getTodayDateString());
   const [targets, setTargets] = useState<DailyTargets>({
@@ -139,9 +137,6 @@ export const App: React.FC = () => {
 
   return (
     <div className="min-h-[100dvh] bg-[#F0EBE1] text-ink flex flex-col items-center sm:justify-center sm:py-6">
-      {/* Fast Splash Screen on App Launch */}
-      {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
-
       {/* Mobile Frame Container (100dvh locked on mobile so top/bottom bars never move) */}
       <div className="w-full max-w-[430px] h-[100dvh] sm:max-w-[390px] sm:h-[844px] bg-cream-100 sm:border-[8px] sm:border-ink sm:rounded-[44px] shadow-2xl flex flex-col overflow-hidden relative">
         {/* Fixed Top Utility Bar */}
