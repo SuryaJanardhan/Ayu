@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
-import { Trash2, Coffee, Utensils, Apple, Sandwich, Edit3 } from 'lucide-react';
+import React from 'react';
+import { Coffee, Utensils, Apple, Sandwich } from 'lucide-react';
 import { MealLog } from '../types';
 import { db } from '../db';
-import { normalizeMealPhrase } from '../utils/normalizer';
 import { getFoodImageFallback } from '../utils/imageOptimizer';
-import { EditMealModal } from './EditMealModal';
 
 interface MealsScreenProps {
   currentDate: string;
@@ -16,11 +14,8 @@ interface MealsScreenProps {
 export const MealsScreen: React.FC<MealsScreenProps> = ({
   currentDate,
   mealLogs,
-  onOpenQuickSnap,
   onRefresh,
 }) => {
-  const [editingMeal, setEditingMeal] = useState<MealLog | null>(null);
-
   const totalCalories = mealLogs.reduce((sum, m) => sum + m.calories, 0);
 
   const frequentMeals = [
@@ -31,7 +26,6 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
   ];
 
   const handleQuickAdd = async (meal: typeof frequentMeals[0]) => {
-    const normalized = normalizeMealPhrase(meal.name);
     const imageUrl = getFoodImageFallback(meal.name);
 
     await db.meal_logs.add({
@@ -47,12 +41,6 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
       was_cached: true,
       image_url: imageUrl,
     });
-    onRefresh();
-  };
-
-  const handleDeleteMeal = async (id?: number) => {
-    if (!id) return;
-    await db.meal_logs.delete(id);
     onRefresh();
   };
 
@@ -127,24 +115,10 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
                     </small>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center">
                     <b className="text-sm font-bold font-mono text-ink tabular-nums">
-                      {log.calories}
+                      {log.calories} kcal
                     </b>
-                    <button
-                      onClick={() => setEditingMeal(log)}
-                      className="p-1 text-ink-mute hover:text-coral transition-colors"
-                      title="Edit meal & photo"
-                    >
-                      <Edit3 size={14} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteMeal(log.id)}
-                      className="p-1 text-ink-mute hover:text-rose transition-colors"
-                      title="Delete meal"
-                    >
-                      <Trash2 size={14} />
-                    </button>
                   </div>
                 </div>
               );
@@ -152,15 +126,6 @@ export const MealsScreen: React.FC<MealsScreenProps> = ({
           </div>
         )}
       </div>
-
-      {/* Edit Modal */}
-      {editingMeal && (
-        <EditMealModal
-          meal={editingMeal}
-          onClose={() => setEditingMeal(null)}
-          onRefresh={onRefresh}
-        />
-      )}
     </div>
   );
 };

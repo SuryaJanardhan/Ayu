@@ -32,3 +32,33 @@
 .tabular-nums {
   font-variant-numeric: tabular-nums;
 }
+
+@keyframes yogiPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes auraWave {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.38);
+  }
+}
+
+.animate-yogi-pop {
+  animation: yogiPop 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-aura-wave {
+  animation: auraWave 420ms ease-out forwards;
+}

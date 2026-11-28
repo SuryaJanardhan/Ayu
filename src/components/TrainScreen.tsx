@@ -1,7 +1,6 @@
 import React from 'react';
-import { Dumbbell, Activity, Flame, Plus, Play, Clock, Trash2 } from 'lucide-react';
+import { Dumbbell, Activity, Flame, Plus, Clock } from 'lucide-react';
 import { WorkoutTemplate, WorkoutSession } from '../types';
-import { db } from '../db';
 
 interface TrainScreenProps {
   currentDate: string;
@@ -12,40 +11,14 @@ interface TrainScreenProps {
 }
 
 export const TrainScreen: React.FC<TrainScreenProps> = ({
-  currentDate,
   sessions,
   templates,
   onOpenSessionModal,
-  onRefresh,
 }) => {
-  const handleDeleteSession = async (id?: number) => {
-    if (!id) return;
-    await db.workout_sessions.delete(id);
-    onRefresh();
-  };
-
-  const workoutCards = [
-    {
-      templateId: 'template-push',
-      name: 'Push day',
-      detail: '5 exercises · 45 min',
-      gradient: 'from-[#FF5C35] to-[#FF2D75]',
-      icon: Dumbbell,
-    },
-    {
-      templateId: 'template-legs',
-      name: 'Legs',
-      detail: '6 exercises · 55 min',
-      gradient: 'from-[#2E9BFF] to-[#1B6FD1]',
-      icon: Activity,
-    },
-    {
-      templateId: 'template-cardio',
-      name: 'Cardio',
-      detail: '30 min · zone 2',
-      gradient: 'from-[#FFB020] to-[#F58A07]',
-      icon: Flame,
-    },
+  const cardStyles = [
+    { gradient: 'from-[#FF5C35] to-[#FF2D75]', icon: Dumbbell },
+    { gradient: 'from-[#2E9BFF] to-[#1B6FD1]', icon: Activity },
+    { gradient: 'from-[#FFB020] to-[#F58A07]', icon: Flame },
   ];
 
   return (
@@ -62,22 +35,24 @@ export const TrainScreen: React.FC<TrainScreenProps> = ({
         </div>
       </div>
 
-      {/* Routine Cards */}
+      {/* Routine Cards (Rendered dynamically from templates) */}
       <div className="space-y-2.5">
-        {workoutCards.map((w, idx) => {
-          const Icon = w.icon;
-          const matchedTemplate = templates.find((t) => t.id === w.templateId) || templates[idx];
+        {templates.map((tmpl, idx) => {
+          const style = cardStyles[idx % cardStyles.length];
+          const Icon = style.icon;
           return (
             <button
-              key={idx}
-              onClick={() => onOpenSessionModal(matchedTemplate)}
-              className={`w-full h-28 rounded-3xl p-4 bg-gradient-to-br ${w.gradient} text-white flex flex-col justify-end relative overflow-hidden text-left shadow-card hover:opacity-95 active:scale-[0.99] transition-all`}
+              key={tmpl.id}
+              onClick={() => onOpenSessionModal(tmpl)}
+              className={`w-full h-28 rounded-3xl p-4 bg-gradient-to-br ${style.gradient} text-white flex flex-col justify-end relative overflow-hidden text-left shadow-card hover:opacity-95 active:scale-[0.99] transition-all`}
             >
               <div className="absolute right-4 top-2 text-white/30">
                 <Icon size={64} strokeWidth={1.5} />
               </div>
-              <b className="text-lg font-bold leading-tight">{w.name}</b>
-              <small className="text-xs text-white/90 font-medium">{w.detail}</small>
+              <b className="text-lg font-bold leading-tight">{tmpl.name}</b>
+              <small className="text-xs text-white/90 font-medium">
+                {tmpl.exercises.length} exercises · {tmpl.category}
+              </small>
             </button>
           );
         })}
@@ -106,17 +81,9 @@ export const TrainScreen: React.FC<TrainScreenProps> = ({
               >
                 <div className="flex justify-between items-center mb-1">
                   <b className="text-sm font-bold text-ink">{sess.name}</b>
-                  <div className="flex items-center gap-2">
-                    <span className="text-ink-mute font-mono text-[11px] flex items-center gap-1">
-                      <Clock size={12} /> {sess.duration_minutes}m
-                    </span>
-                    <button
-                      onClick={() => handleDeleteSession(sess.id)}
-                      className="text-ink-mute hover:text-rose p-1"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
+                  <span className="text-ink-mute font-mono text-[11px] flex items-center gap-1">
+                    <Clock size={12} /> {sess.duration_minutes}m
+                  </span>
                 </div>
                 <div className="text-[11px] text-ink-mute font-mono">
                   {sess.exercises.map((e) => e.name).join(' · ')}
