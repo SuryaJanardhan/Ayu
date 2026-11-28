@@ -49,8 +49,24 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   const currentWaterL = ((biometrics?.water_ml || 0) / 1000).toFixed(1);
   const isWaterGoalMet = (biometrics?.water_ml || 0) >= (targets.target_water_ml || 3000);
 
-  const currentWeight = biometrics?.weight_kg || 73.8;
-  const currentAvg = historicalWeights.find((w) => w.date === currentDate)?.moving_avg || 74.2;
+  const currentWeight = biometrics?.weight_kg;
+  const currentAvg = historicalWeights.find((w) => w.date === currentDate)?.moving_avg;
+
+  const recentPoints = historicalWeights.slice(-7);
+  const sparklinePoints = (() => {
+    if (recentPoints.length < 2) return '';
+    const vals = recentPoints.map((w) => w.weight);
+    const min = Math.min(...vals) - 0.5;
+    const max = Math.max(...vals) + 0.5;
+    const span = max - min || 1;
+    return recentPoints
+      .map((w, idx) => {
+        const x = (idx / (recentPoints.length - 1)) * 90;
+        const y = 32 - ((w.weight - min) / span) * 26;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(' ');
+  })();
 
   const handleAddWater = async (amount: number) => {
     const existing = await db.daily_biometrics.get(currentDate);
@@ -213,7 +229,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Footprints size={16} />
             </div>
             <b className="text-sm font-extrabold text-ink leading-tight tabular-nums">
-              {biometrics?.steps ? `${(biometrics.steps / 1000).toFixed(1)}k` : '9.5k'}
+              {biometrics?.steps !== undefined ? `${(biometrics.steps / 1000).toFixed(1)}k` : '--'}
             </b>
             <span className="text-[10px] text-ink-mute font-medium">steps</span>
           </div>
@@ -223,7 +239,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Moon size={16} />
             </div>
             <b className="text-sm font-extrabold text-ink leading-tight tabular-nums">
-              {biometrics?.sleep_hours ? `${biometrics.sleep_hours}h` : '7.4h'}
+              {biometrics?.sleep_hours !== undefined ? `${biometrics.sleep_hours}h` : '--'}
             </b>
             <span className="text-[10px] text-ink-mute font-medium">sleep</span>
           </div>
@@ -233,7 +249,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               <Heart size={16} />
             </div>
             <b className="text-sm font-extrabold text-ink leading-tight tabular-nums">
-              {biometrics?.resting_hr || 60}
+              {biometrics?.resting_hr !== undefined ? biometrics.resting_hr : '--'}
             </b>
             <span className="text-[10px] text-ink-mute font-medium">bpm</span>
           </div>
@@ -277,23 +293,29 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
       >
         <div>
           <div className="flex items-center gap-1.5">
-            <b className="text-sm font-bold text-ink block">Weight {currentWeight} kg</b>
+            <b className="text-sm font-bold text-ink block">
+              {currentWeight !== undefined ? `Weight ${currentWeight} kg` : 'Weight not logged'}
+            </b>
             <ChevronRight size={14} className="text-ink-mute" />
           </div>
           <small className="text-ink-mute text-xs font-medium">
-            7-day avg {currentAvg} kg ↓
+            {currentAvg !== undefined ? `7-day avg ${currentAvg} kg` : 'Tap to view stats'}
           </small>
         </div>
 
-        <svg width="90" height="36" className="overflow-visible">
-          <polyline
-            points="0,10 15,14 30,12 45,18 60,20 75,24 90,26"
-            fill="none"
-            stroke="#FF5C35"
-            strokeWidth="3"
-            strokeLinecap="round"
-          />
-        </svg>
+        {sparklinePoints ? (
+          <svg width="90" height="36" className="overflow-visible">
+            <polyline
+              points={sparklinePoints}
+              fill="none"
+              stroke="#FF5C35"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+        ) : (
+          <span className="text-xs font-mono text-ink-mute">No trend</span>
+        )}
       </button>
     </div>
   );

@@ -120,83 +120,80 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onRefresh
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-md bg-white border border-cream-200 rounded-3xl p-6 shadow-2xl my-auto max-h-[92vh] flex flex-col">
+      <div className="w-full max-w-md bg-cream-100 border border-cream-200 rounded-3xl p-5 shadow-2xl my-auto max-h-[92vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-base font-extrabold text-ink">Settings & Storage Vault</h3>
-            <span className="text-xs font-mono text-ink-mute">Two-Tier Local Memory Architecture</span>
-          </div>
-          <button onClick={onClose} className="p-1 rounded-lg text-ink-mute hover:text-ink">
+          <h3 className="text-lg font-extrabold text-ink">Settings & Vault</h3>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full bg-white border border-cream-200 text-ink-mute hover:text-ink"
+          >
             <X size={18} />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto space-y-5 pr-1">
-          {/* Two-Tier Storage Architecture Overview */}
-          <div className="p-3.5 bg-cream-100 rounded-2xl border border-cream-200">
-            <div className="flex items-center gap-2 mb-2">
-              <HardDrive size={16} className="text-coral" />
-              <b className="text-xs font-bold text-ink uppercase">Storage Tiers Status</b>
+        <div className="flex-1 overflow-y-auto space-y-4 pr-0.5">
+          {/* Storage Tiers */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-white p-3 rounded-2xl border border-cream-200">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-ink-mute mb-1">
+                <HardDrive size={15} className="text-coral" />
+                <span>Main</span>
+              </div>
+              <b className="text-base font-mono text-ink block">{formatKB(storageStats.mainBytes)}</b>
+              <span className="text-xs text-coral font-medium">
+                {storageStats.imageAttachments} photos
+              </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-              <div className="bg-white p-2.5 rounded-xl border border-cream-200">
-                <span className="text-[10px] text-ink-mute block uppercase">Set 1: Main Memory</span>
-                <b className="text-ink text-sm block">{formatKB(storageStats.mainBytes)}</b>
-                <span className="text-[9px] text-coral font-medium">
-                  {storageStats.imageAttachments} photos cached
-                </span>
+            <div className="bg-white p-3 rounded-2xl border border-cream-200">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-ink-mute mb-1">
+                <Archive size={15} className="text-sky" />
+                <span>Archive</span>
               </div>
-
-              <div className="bg-white p-2.5 rounded-xl border border-cream-200">
-                <span className="text-[10px] text-ink-mute block uppercase">Set 2: Weekly Archive</span>
-                <b className="text-ink text-sm block">{formatKB(storageStats.snapshotBytes)}</b>
-                <span className="text-[9px] text-sky font-medium">
-                  {storageStats.snapshotCount} compressed snapshots
-                </span>
-              </div>
+              <b className="text-base font-mono text-ink block">{formatKB(storageStats.snapshotBytes)}</b>
+              <span className="text-xs text-sky font-medium">
+                {storageStats.snapshotCount} snapshots
+              </span>
             </div>
           </div>
 
-          {/* Weekly Compressed Snapshots Manager */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-mono uppercase font-bold text-ink-mute flex items-center gap-1.5">
-                <Archive size={14} className="text-sky" />
-                <span>Compressed Weekly Snapshots</span>
-              </h4>
+          {/* Snapshots */}
+          <div className="bg-white p-3.5 rounded-2xl border border-cream-200 space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-bold text-ink flex items-center gap-1.5">
+                <Archive size={16} className="text-sky" />
+                <span>Snapshots</span>
+              </span>
               <button
                 onClick={handleCreateSnapshot}
                 disabled={isSnapshotting}
-                className="px-2.5 py-1 bg-coral hover:bg-coral-hover text-white rounded-lg text-[10px] font-bold font-mono transition-colors disabled:opacity-50"
+                className="px-3 py-1.5 bg-coral hover:bg-coral-hover text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
               >
-                {isSnapshotting ? 'Compressing...' : '+ Snapshot Now'}
+                {isSnapshotting ? 'Saving...' : '+ Snapshot'}
               </button>
             </div>
 
             {snapshots.length === 0 ? (
-              <div className="p-3 text-center border border-dashed border-cream-200 rounded-xl text-xs text-ink-mute font-mono">
-                No weekly snapshots yet. Tap '+ Snapshot Now' to compress and archive.
+              <div className="p-2.5 text-center border border-dashed border-cream-200 rounded-xl text-xs text-ink-mute">
+                No snapshots yet
               </div>
             ) : (
-              <div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+              <div className="space-y-1.5 max-h-32 overflow-y-auto">
                 {snapshots.map((s) => (
                   <div
                     key={s.id}
-                    className="p-2.5 bg-cream-100 border border-cream-200 rounded-xl flex items-center justify-between text-xs"
+                    className="p-2.5 bg-cream-100 border border-cream-200 rounded-xl flex items-center justify-between"
                   >
                     <div>
-                      <b className="text-ink block text-[11px] leading-tight">{s.week_label}</b>
-                      <span className="text-[10px] font-mono text-ink-mute">
-                        {formatKB(s.compressed_bytes)} (was {formatKB(s.original_bytes)}) · {s.ratio_percent}% ratio
+                      <b className="text-ink block text-[13px] leading-tight">{s.week_label}</b>
+                      <span className="text-xs font-mono text-ink-mute">
+                        {formatKB(s.compressed_bytes)} · {s.ratio_percent}%
                       </span>
                     </div>
-
                     <button
                       onClick={() => handleRestoreSnapshot(s.id)}
-                      className="px-2 py-1 bg-white hover:bg-cream-200 border border-cream-200 text-sky hover:text-ink rounded-lg font-mono text-[10px] font-bold transition-colors"
-                      title="Restore working set to this snapshot"
+                      className="px-2.5 py-1 bg-white border border-cream-200 text-sky hover:text-ink rounded-lg text-xs font-bold"
                     >
                       Restore
                     </button>
@@ -206,70 +203,60 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onRefresh
             )}
           </div>
 
-          {/* Database Backup Export/Import */}
-          <div className="pt-3 border-t border-cream-200">
-            <h4 className="text-xs font-mono uppercase font-bold text-ink-mute mb-2">
-              Vault Export & Import
-            </h4>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                onClick={handleExportBackup}
-                className="py-2.5 px-3 bg-white hover:bg-cream-100 border border-cream-200 rounded-xl text-xs font-mono font-bold text-ink flex items-center justify-center gap-1.5 transition-colors shadow-xs"
-              >
-                <Download size={14} className="text-sky" />
-                <span>Export JSON</span>
-              </button>
+          {/* Backup Export/Import */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              onClick={handleExportBackup}
+              className="py-3 px-3 bg-white hover:bg-cream-200/40 border border-cream-200 rounded-2xl text-[13px] font-bold text-ink flex items-center justify-center gap-2 shadow-xs"
+            >
+              <Download size={16} className="text-sky" />
+              <span>Export</span>
+            </button>
 
-              <label className="py-2.5 px-3 bg-white hover:bg-cream-100 border border-cream-200 rounded-xl text-xs font-mono font-bold text-ink flex items-center justify-center gap-1.5 cursor-pointer transition-colors shadow-xs">
-                <Upload size={14} className="text-coral" />
-                <span>Restore JSON</span>
-                <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
-              </label>
-            </div>
-
-            {importStatus && (
-              <div className="mt-2 text-xs font-mono text-center p-2 rounded-lg bg-cream-100 border border-cream-200 text-ink">
-                {importStatus}
-              </div>
-            )}
+            <label className="py-3 px-3 bg-white hover:bg-cream-200/40 border border-cream-200 rounded-2xl text-[13px] font-bold text-ink flex items-center justify-center gap-2 cursor-pointer shadow-xs">
+              <Upload size={16} className="text-coral" />
+              <span>Import</span>
+              <input type="file" accept=".json" onChange={handleImportBackup} className="hidden" />
+            </label>
           </div>
 
+          {importStatus && (
+            <div className="text-xs font-mono text-center p-2.5 rounded-xl bg-white border border-cream-200 text-ink">
+              {importStatus}
+            </div>
+          )}
+
           {/* Gemini API Key */}
-          <div className="pt-3 border-t border-cream-200">
-            <h4 className="text-xs font-mono uppercase font-bold text-ink-mute mb-1 flex items-center gap-1.5">
-              <Key size={13} className="text-sun" />
-              <span>Gemini API Key (Optional AI Parser)</span>
-            </h4>
-            <p className="text-[11px] text-ink-mute mb-2">
-              Used strictly on cache misses for novel meal photo/voice parsing. Stored locally.
-            </p>
+          <div className="bg-white p-3.5 rounded-2xl border border-cream-200 space-y-2">
+            <div className="flex items-center gap-1.5 text-sm font-bold text-ink">
+              <Key size={16} className="text-sun" />
+              <span>Gemini API Key</span>
+            </div>
             <div className="flex gap-2">
               <input
                 type="password"
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
                 placeholder="AIzaSy..."
-                className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-xs text-ink font-mono focus:border-coral focus:outline-none"
+                className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm text-ink font-mono focus:border-coral focus:outline-none"
               />
               <button
                 onClick={handleSaveApiKey}
-                className="px-3.5 py-2 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl text-xs transition-colors shadow-xs"
+                className="px-4 py-2 bg-coral hover:bg-coral-hover text-white font-bold rounded-xl text-sm transition-colors"
               >
-                {savedSuccess ? <Check size={14} /> : 'Save'}
+                {savedSuccess ? <Check size={16} /> : 'Save'}
               </button>
             </div>
           </div>
 
-          {/* Reset to Seed */}
-          <div className="pt-3 border-t border-cream-200">
-            <button
-              onClick={handleResetDefaults}
-              className="w-full py-2.5 bg-cream-100 hover:bg-rose-light border border-cream-200 hover:border-rose text-ink-mute hover:text-rose rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-1.5 transition-colors"
-            >
-              <RotateCcw size={14} />
-              <span>Reset to Clean Demo Seed Data</span>
-            </button>
-          </div>
+          {/* Clear All Data */}
+          <button
+            onClick={handleResetDefaults}
+            className="w-full py-3 bg-white hover:bg-rose-light border border-cream-200 hover:border-rose text-ink-mute hover:text-rose rounded-2xl text-[13px] font-bold flex items-center justify-center gap-2 transition-colors"
+          >
+            <RotateCcw size={16} />
+            <span>Clear All Data</span>
+          </button>
         </div>
       </div>
     </div>

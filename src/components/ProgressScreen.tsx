@@ -48,7 +48,7 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
   const [showAddModal, setShowAddModal] = useState(false);
   const [newLabel, setNewLabel] = useState('Weekly Check-in');
   const [newWeight, setNewWeight] = useState(
-    biometrics?.weight_kg ? String(biometrics.weight_kg) : '73.8'
+    biometrics?.weight_kg ? String(biometrics.weight_kg) : ''
   );
   const [previewPhoto, setPreviewPhoto] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -143,19 +143,17 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
   const maxWater = Math.max(targetWaterL * 1.15, ...buckets.map((b) => b.waterL), 1);
   const maxWorkout = Math.max(...buckets.map((b) => b.workoutMin), 45);
 
-  const currentWeight = biometrics?.weight_kg || 73.8;
+  const currentWeight = biometrics?.weight_kg;
   const recentWeights = useMemo(() => {
-    const slice = historicalWeights.slice(-(range === '7d' ? 7 : 30));
-    if (slice.length >= 2) return slice;
-    return [
-      { date: shiftDate(currentDate, -6), weight: currentWeight + 0.4, moving_avg: currentWeight + 0.4 },
-      { date: currentDate, weight: currentWeight, moving_avg: currentWeight },
-    ];
-  }, [historicalWeights, range, currentDate, currentWeight]);
+    return historicalWeights.slice(-(range === '7d' ? 7 : 30));
+  }, [historicalWeights, range]);
 
-  const weightDelta = Number(
-    (recentWeights[recentWeights.length - 1].weight - recentWeights[0].weight).toFixed(1)
-  );
+  const weightDelta =
+    recentWeights.length >= 2
+      ? Number(
+          (recentWeights[recentWeights.length - 1].weight - recentWeights[0].weight).toFixed(1)
+        )
+      : 0;
 
   const weightSvgPoints = useMemo(() => {
     const vals = recentWeights.map((w) => w.weight);
@@ -246,22 +244,30 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
             avg {avgCalories} / {targetCal} kcal
           </span>
         </div>
-        <div className="relative h-24 flex items-end gap-1.5 pt-2">
+        <div className="relative h-28 flex items-end gap-1.5 pt-4">
           <div
             className="absolute left-0 right-0 border-t border-dashed border-coral/40 pointer-events-none"
-            style={{ bottom: `${Math.min((targetCal / maxCal) * 100, 96)}%` }}
+            style={{ bottom: `${Math.min((targetCal / maxCal) * 82, 82)}%` }}
           />
           {buckets.map((b, idx) => {
-            const pct = Math.max(4, Math.round((b.calories / maxCal) * 100));
+            const pct = b.calories > 0 ? Math.max(8, Math.round((b.calories / maxCal) * 100)) : 4;
+            const calLabel =
+              b.calories >= 1000 ? `${(b.calories / 1000).toFixed(1)}k` : String(b.calories);
             return (
               <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                <span className="text-[10px] font-mono font-bold text-ink tabular-nums leading-none">
+                  {calLabel}
+                </span>
                 <div className="w-full flex-1 flex items-end justify-center">
                   <div
                     className={`w-full max-w-[26px] rounded-t-lg transition-all duration-300 ${
-                      b.calories > targetCal ? 'bg-rose' : 'bg-coral'
+                      b.calories === 0
+                        ? 'bg-cream-200'
+                        : b.calories > targetCal
+                        ? 'bg-rose'
+                        : 'bg-coral'
                     }`}
                     style={{ height: `${pct}%` }}
-                    title={`${b.calories} kcal`}
                   />
                 </div>
                 <span className="text-[10px] font-mono text-ink-mute">{b.label}</span>
@@ -284,20 +290,24 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
             avg {avgWater} / {targetWaterL.toFixed(1)} L
           </span>
         </div>
-        <div className="relative h-20 flex items-end gap-1.5 pt-2">
+        <div className="relative h-24 flex items-end gap-1.5 pt-4">
           <div
             className="absolute left-0 right-0 border-t border-dashed border-sky/40 pointer-events-none"
-            style={{ bottom: `${Math.min((targetWaterL / maxWater) * 100, 96)}%` }}
+            style={{ bottom: `${Math.min((targetWaterL / maxWater) * 82, 82)}%` }}
           />
           {buckets.map((b, idx) => {
-            const pct = Math.max(4, Math.round((b.waterL / maxWater) * 100));
+            const pct = b.waterL > 0 ? Math.max(8, Math.round((b.waterL / maxWater) * 100)) : 4;
             return (
               <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                <span className="text-[10px] font-mono font-bold text-ink tabular-nums leading-none">
+                  {b.waterL > 0 ? b.waterL.toFixed(1) : '0'}
+                </span>
                 <div className="w-full flex-1 flex items-end justify-center">
                   <div
-                    className="w-full max-w-[26px] rounded-t-lg bg-sky transition-all duration-300"
+                    className={`w-full max-w-[26px] rounded-t-lg transition-all duration-300 ${
+                      b.waterL === 0 ? 'bg-cream-200' : 'bg-sky'
+                    }`}
                     style={{ height: `${pct}%` }}
-                    title={`${b.waterL} L`}
                   />
                 </div>
                 <span className="text-[10px] font-mono text-ink-mute">{b.label}</span>
@@ -321,18 +331,20 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
               {totalWorkoutMin} min total
             </span>
           </div>
-          <div className="h-16 flex items-end gap-1.5">
+          <div className="h-20 flex items-end gap-1.5 pt-3">
             {buckets.map((b, idx) => {
               const pct = b.workoutMin > 0 ? Math.max(12, Math.round((b.workoutMin / maxWorkout) * 100)) : 5;
               return (
                 <div key={idx} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                  <span className="text-[10px] font-mono font-bold text-ink tabular-nums leading-none">
+                    {b.workoutMin > 0 ? `${b.workoutMin}m` : '0'}
+                  </span>
                   <div className="w-full flex-1 flex items-end justify-center">
                     <div
                       className={`w-full max-w-[26px] rounded-t-lg transition-all duration-300 ${
                         b.workoutMin > 0 ? 'bg-sun' : 'bg-cream-200'
                       }`}
                       style={{ height: `${pct}%` }}
-                      title={`${b.workoutMin} min`}
                     />
                   </div>
                   <span className="text-[10px] font-mono text-ink-mute">{b.label}</span>
@@ -361,25 +373,35 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
       <div className="bg-white rounded-3xl p-4 border border-cream-200 shadow-card">
         <div className="flex justify-between items-center mb-1">
           <div className="flex items-baseline gap-1">
-            <b className="text-2xl font-extrabold text-ink tabular-nums">{currentWeight}</b>
+            <b className="text-2xl font-extrabold text-ink tabular-nums">
+              {currentWeight !== undefined ? currentWeight : '--'}
+            </b>
             <small className="text-ink-mute text-xs font-medium">kg</small>
           </div>
-          <span className="text-coral font-bold text-xs flex items-center gap-0.5">
-            {weightDelta <= 0 ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
-            {weightDelta > 0 ? `+${weightDelta}` : weightDelta} kg ({range})
-          </span>
+          {recentWeights.length >= 2 && (
+            <span className="text-coral font-bold text-xs flex items-center gap-0.5">
+              {weightDelta <= 0 ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
+              {weightDelta > 0 ? `+${weightDelta}` : weightDelta} kg ({range})
+            </span>
+          )}
         </div>
         <div className="w-full mt-2">
-          <svg viewBox="0 0 280 84" width="100%" className="overflow-visible">
-            <polyline
-              points={weightSvgPoints}
-              fill="none"
-              stroke="#FF5C35"
-              strokeWidth="3.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          {recentWeights.length >= 2 ? (
+            <svg viewBox="0 0 280 84" width="100%" className="overflow-visible">
+              <polyline
+                points={weightSvgPoints}
+                fill="none"
+                stroke="#FF5C35"
+                strokeWidth="3.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          ) : (
+            <div className="py-4 text-center text-xs text-ink-mute border border-dashed border-cream-200 rounded-2xl">
+              Log at least 2 days of weight to see trend
+            </div>
+          )}
         </div>
       </div>
 

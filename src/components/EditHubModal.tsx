@@ -54,12 +54,12 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateEx, setNewTemplateEx] = useState('Push-ups, Pull-ups, Planks');
 
-  // Vitals & Targets state
-  const [weight, setWeight] = useState(String(biometrics?.weight_kg ?? 73.8));
-  const [steps, setSteps] = useState(String(biometrics?.steps ?? 9500));
-  const [sleep, setSleep] = useState(String(biometrics?.sleep_hours ?? 7.4));
-  const [bpm, setBpm] = useState(String(biometrics?.resting_hr ?? 60));
-  const [waterMl, setWaterMl] = useState(String(biometrics?.water_ml ?? 2500));
+  // Vitals & Targets state (no fake defaults)
+  const [weight, setWeight] = useState(biometrics?.weight_kg !== undefined ? String(biometrics.weight_kg) : '');
+  const [steps, setSteps] = useState(biometrics?.steps !== undefined ? String(biometrics.steps) : '');
+  const [sleep, setSleep] = useState(biometrics?.sleep_hours !== undefined ? String(biometrics.sleep_hours) : '');
+  const [bpm, setBpm] = useState(biometrics?.resting_hr !== undefined ? String(biometrics.resting_hr) : '');
+  const [waterMl, setWaterMl] = useState(biometrics?.water_ml !== undefined ? String(biometrics.water_ml) : '');
 
   const [calTarget, setCalTarget] = useState(String(targets.target_calories || 2200));
   const [proTarget, setProTarget] = useState(String(targets.target_protein_g || 160));
@@ -191,23 +191,17 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
 
   // --- Vitals & Targets handler ---
   const handleSaveVitalsAndTargets = async () => {
-    const w = parseFloat(weight) || 73.8;
-    const st = parseInt(steps, 10) || 9500;
-    const sl = parseFloat(sleep) || 7.4;
-    const hr = parseInt(bpm, 10) || 60;
-    const wt = parseInt(waterMl, 10) || 2500;
-
     const existingBio = await db.daily_biometrics.get(currentDate);
     await db.daily_biometrics.put({
       ...existingBio,
       date: currentDate,
-      weight_kg: w,
-      weight_is_manual: true,
-      steps: st,
-      sleep_hours: sl,
-      sleep_is_manual: true,
-      resting_hr: hr,
-      water_ml: wt,
+      weight_kg: weight !== '' ? parseFloat(weight) : existingBio?.weight_kg,
+      weight_is_manual: weight !== '' ? true : existingBio?.weight_is_manual ?? false,
+      steps: steps !== '' ? parseInt(steps, 10) : existingBio?.steps,
+      sleep_hours: sleep !== '' ? parseFloat(sleep) : existingBio?.sleep_hours,
+      sleep_is_manual: sleep !== '' ? true : existingBio?.sleep_is_manual ?? false,
+      resting_hr: bpm !== '' ? parseInt(bpm, 10) : existingBio?.resting_hr,
+      water_ml: waterMl !== '' ? parseInt(waterMl, 10) : existingBio?.water_ml ?? 0,
       updated_at: new Date().toISOString(),
     });
 
@@ -229,23 +223,23 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/50 backdrop-blur-sm">
       <div className="w-full max-w-[430px] sm:max-w-md h-[88dvh] bg-cream-100 border-t sm:border border-cream-200 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="px-4 py-3 bg-white border-b border-cream-200 flex items-center justify-between shrink-0">
+        <div className="px-4 py-3.5 bg-white border-b border-cream-200 flex items-center justify-between shrink-0">
           <div>
-            <b className="text-base font-extrabold text-ink">Edit All</b>
-            <span className="text-[11px] text-ink-mute block">{currentDate}</span>
+            <b className="text-lg font-extrabold text-ink">Edit All</b>
+            <span className="text-xs text-ink-mute block font-mono">{currentDate}</span>
           </div>
           <div className="flex items-center gap-2">
             {statusMsg && (
-              <span className="text-[11px] font-bold text-coral bg-coral-light px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold text-coral bg-coral-light px-3 py-1 rounded-full">
                 {statusMsg}
               </span>
             )}
             <button
               onClick={onClose}
-              className="p-2 rounded-full bg-cream-100 text-ink-mute hover:text-ink"
+              className="p-2.5 rounded-full bg-cream-100 text-ink-mute hover:text-ink"
               aria-label="Close editor"
             >
-              <X size={16} />
+              <X size={18} />
             </button>
           </div>
         </div>
@@ -261,11 +255,11 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
               <button
                 key={id}
                 onClick={() => setSection(id)}
-                className={`py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-colors ${
+                className={`py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-1.5 transition-colors ${
                   section === id ? 'bg-coral text-white' : 'text-ink-mute hover:text-ink'
                 }`}
               >
-                <Icon size={14} />
+                <Icon size={16} />
                 <span>{label}</span>
               </button>
             ))}
@@ -621,15 +615,16 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                     ['Water (ml)', waterMl, setWaterMl, '250'],
                   ].map(([label, val, setter, step]) => (
                     <label key={label as string} className="block">
-                      <span className="text-[10px] font-bold text-ink-mute block mb-0.5">
+                      <span className="text-xs font-bold text-ink-mute block mb-1">
                         {label as string}
                       </span>
                       <input
                         type="number"
                         step={step as string}
+                        placeholder="--"
                         value={val as string}
                         onChange={(e) => (setter as (v: string) => void)(e.target.value)}
-                        className="w-full bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-ink"
+                        className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-ink"
                       />
                     </label>
                   ))}
@@ -637,7 +632,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
               </div>
 
               <div className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute block">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-mute block">
                   Daily Targets
                 </span>
                 <div className="grid grid-cols-2 gap-2">
@@ -649,14 +644,14 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                     ['Water Goal (ml)', waterTarget, setWaterTarget],
                   ].map(([label, val, setter]) => (
                     <label key={label as string} className="block">
-                      <span className="text-[10px] font-bold text-ink-mute block mb-0.5">
+                      <span className="text-xs font-bold text-ink-mute block mb-1">
                         {label as string}
                       </span>
                       <input
                         type="number"
                         value={val as string}
                         onChange={(e) => (setter as (v: string) => void)(e.target.value)}
-                        className="w-full bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs font-mono font-bold text-ink"
+                        className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-ink"
                       />
                     </label>
                   ))}
@@ -665,9 +660,9 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
 
               <button
                 onClick={handleSaveVitalsAndTargets}
-                className="w-full py-3 rounded-2xl bg-coral text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-card"
+                className="w-full py-3.5 rounded-2xl bg-coral text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-card"
               >
-                <Check size={15} />
+                <Check size={17} />
                 <span>Save All Vitals & Targets</span>
               </button>
             </div>
