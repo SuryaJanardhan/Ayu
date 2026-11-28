@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, Check, Upload, Image as ImageIcon } from 'lucide-react';
+import { X, Check, Upload, Camera, Image as ImageIcon } from 'lucide-react';
 import { MealLog } from '../types';
 import { db } from '../db';
 import { normalizeMealPhrase } from '../utils/normalizer';
@@ -77,8 +77,14 @@ export const EditMealModal: React.FC<EditMealModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-white border border-cream-200 rounded-3xl p-5 shadow-2xl">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-white border border-cream-200 rounded-3xl p-5 shadow-2xl"
+      >
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-base font-bold text-ink">Edit Meal & Photo</h3>
           <button onClick={onClose} className="p-1 text-ink-mute hover:text-ink">
@@ -92,18 +98,31 @@ export const EditMealModal: React.FC<EditMealModalProps> = ({
             <img src={photoUrl} alt="Meal preview" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1">
-            <span className="text-[11px] font-bold text-ink block">Meal Photo Attachment</span>
-            <label className="inline-flex items-center gap-1 text-[11px] font-bold text-coral hover:underline cursor-pointer mt-0.5">
-              <Upload size={12} />
-              <span>{isCompressing ? 'Compressing...' : 'Change Photo'}</span>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                className="hidden"
-              />
-            </label>
+            <span className="text-xs font-bold text-ink block mb-1">Meal Photo</span>
+            <div className="flex items-center gap-2">
+              <label className="inline-flex items-center gap-1 text-xs font-bold text-white bg-coral px-2.5 py-1 rounded-lg cursor-pointer">
+                <Camera size={13} />
+                <span>{isCompressing ? '...' : 'Camera'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+              </label>
+              <label className="inline-flex items-center gap-1 text-xs font-bold text-ink bg-white border border-cream-200 px-2.5 py-1 rounded-lg cursor-pointer">
+                <Upload size={13} className="text-coral" />
+                <span>Gallery</span>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
         </div>
 

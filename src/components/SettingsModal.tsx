@@ -119,8 +119,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, onRefresh
   const formatKB = (bytes: number) => `${(bytes / 1024).toFixed(1)} KB`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-md bg-cream-100 border border-cream-200 rounded-3xl p-5 shadow-2xl my-auto max-h-[92vh] flex flex-col">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm overflow-y-auto"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-md bg-cream-100 border border-cream-200 rounded-3xl p-5 shadow-2xl my-auto max-h-[92vh] flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-extrabold text-ink">Settings & Vault</h3>

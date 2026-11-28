@@ -459,27 +459,51 @@ export const ProgressScreen: React.FC<ProgressScreenProps> = ({
 
       {/* Upload Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm">
-          <div className="w-full max-w-sm bg-white border border-cream-200 rounded-3xl p-5 shadow-2xl flex flex-col gap-3">
+        <div
+          onClick={() => {
+            setPreviewPhoto(null);
+            setShowAddModal(false);
+          }}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-sm bg-white border border-cream-200 rounded-3xl p-5 shadow-2xl flex flex-col gap-3"
+          >
             <b className="text-base font-bold text-ink">Add Progress Photo</b>
             <div className="h-48 rounded-2xl bg-cream-100 border border-dashed border-cream-200 flex flex-col items-center justify-center relative overflow-hidden">
               {previewPhoto ? (
                 <img src={previewPhoto} alt="Preview" className="w-full h-full object-cover" />
               ) : (
-                <label className="flex flex-col items-center cursor-pointer p-4 text-center">
-                  <Upload size={32} className="text-coral mb-2" />
+                <div className="flex flex-col items-center p-4 text-center gap-2.5">
                   <span className="text-xs font-bold text-ink">
-                    {isUploading ? 'Optimizing photo...' : 'Select or Take Photo'}
+                    {isUploading ? 'Optimizing photo...' : 'Capture or Pick Photo'}
                   </span>
-                  <span className="text-[10px] text-ink-mute mt-1">Auto-downscaled WebP</span>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoSelect}
-                    className="hidden"
-                  />
-                </label>
+                  <div className="flex items-center gap-2">
+                    <label className="px-3.5 py-2 rounded-xl bg-coral text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs">
+                      <Camera size={15} />
+                      <span>Take Photo</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        capture="environment"
+                        onChange={handlePhotoSelect}
+                        className="hidden"
+                      />
+                    </label>
+                    <label className="px-3.5 py-2 rounded-xl bg-white border border-cream-200 text-ink text-xs font-bold flex items-center gap-1.5 cursor-pointer shadow-xs">
+                      <Upload size={15} className="text-coral" />
+                      <span>Gallery</span>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoSelect}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
               )}
             </div>
             <div>

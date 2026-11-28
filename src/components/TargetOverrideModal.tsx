@@ -51,8 +51,14 @@ export const TargetOverrideModal: React.FC<TargetOverrideModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm">
-      <div className="w-full max-w-sm bg-cream-100 border border-cream-200 rounded-3xl p-5 shadow-2xl">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-ink/50 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-cream-100 border border-cream-200 rounded-3xl p-5 shadow-2xl"
+      >
         <div className="flex items-center justify-between mb-4">
           <div>
             <h3 className="text-lg font-extrabold text-ink">Targets</h3>

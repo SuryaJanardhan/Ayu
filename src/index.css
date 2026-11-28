@@ -33,6 +33,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: #FF5C35;
+}
+
 @keyframes yogiPop {
   0% {
     opacity: 0;

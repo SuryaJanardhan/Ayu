@@ -86,8 +86,14 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-ink/50 backdrop-blur-sm overflow-y-auto">
-      <div className="w-full max-w-sm bg-white rounded-3xl p-5 border border-cream-200 shadow-2xl flex flex-col gap-3 my-auto">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-ink/50 backdrop-blur-sm overflow-y-auto"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-sm bg-white rounded-3xl p-5 border border-cream-200 shadow-2xl flex flex-col gap-3 my-auto"
+      >
         {/* Header */}
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-1.5">
@@ -122,18 +128,31 @@ export const SnapMealModal: React.FC<SnapMealModalProps> = ({
               Sourdough
             </div>
 
-            {/* Upload / Capture Trigger */}
-            <label className="absolute bottom-3 left-3 bg-white/90 hover:bg-white text-ink text-xs font-bold px-3 py-1.5 rounded-xl shadow cursor-pointer flex items-center gap-1.5 transition-colors">
-              <Upload size={13} className="text-coral" />
-              <span>{isCompressing ? 'Compressing...' : 'Upload Photo'}</span>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-            </label>
+            {/* Upload / Direct Camera Capture Triggers */}
+            <div className="absolute bottom-3 left-3 right-3 flex items-center gap-2">
+              <label className="bg-coral hover:bg-coral-hover text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow cursor-pointer flex items-center gap-1.5 transition-colors">
+                <Camera size={14} />
+                <span>{isCompressing ? 'Compressing...' : 'Take Photo'}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+              <label className="bg-white/95 hover:bg-white text-ink text-xs font-bold px-3 py-1.5 rounded-xl shadow cursor-pointer flex items-center gap-1.5 transition-colors">
+                <Upload size={14} className="text-coral" />
+                <span>Gallery</span>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+            </div>
           </div>
         ) : (
           <div className="h-44 bg-cream-100 rounded-3xl p-4 flex flex-col justify-center border border-cream-200">

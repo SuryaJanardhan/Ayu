@@ -1,5 +1,25 @@
 import React, { useState } from 'react';
-import { X, Check, Trash2, Plus, UtensilsCrossed, Dumbbell, Activity } from 'lucide-react';
+import {
+  X,
+  Check,
+  Trash2,
+  Plus,
+  UtensilsCrossed,
+  Dumbbell,
+  Activity,
+  Flame,
+  Zap,
+  Wheat,
+  Droplet,
+  Droplets,
+  Scale,
+  Footprints,
+  Moon,
+  Heart,
+  Clock,
+  Repeat,
+  Target,
+} from 'lucide-react';
 import {
   DailyBiometrics,
   DailyTargets,
@@ -24,6 +44,19 @@ interface EditHubModalProps {
   onRefresh: () => void;
 }
 
+const MEAL_TYPES: { id: MealLog['meal_type']; label: string }[] = [
+  { id: 'breakfast', label: 'Brk' },
+  { id: 'lunch', label: 'Lunch' },
+  { id: 'dinner', label: 'Din' },
+  { id: 'snack', label: 'Snack' },
+];
+
+const WORKOUT_CATEGORIES: { id: WorkoutTemplate['category']; label: string }[] = [
+  { id: 'strength', label: 'Strength' },
+  { id: 'cardio', label: 'Cardio' },
+  { id: 'mobility', label: 'Mobility' },
+];
+
 export const EditHubModal: React.FC<EditHubModalProps> = ({
   initialSection = 'meals',
   currentDate,
@@ -38,13 +71,11 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
   const [section, setSection] = useState<EditHubSection>(initialSection);
   const [statusMsg, setStatusMsg] = useState<string | null>(null);
 
-  // Meals editable drafts
   const [mealDrafts, setMealDrafts] = useState<MealLog[]>(() => mealLogs.map((m) => ({ ...m })));
   const [newMealName, setNewMealName] = useState('');
   const [newMealCal, setNewMealCal] = useState('350');
   const [newMealPro, setNewMealPro] = useState('25');
 
-  // Train editable drafts
   const [templateDrafts, setTemplateDrafts] = useState<WorkoutTemplate[]>(() =>
     workoutTemplates.map((t) => ({ ...t, exercises: t.exercises.map((e) => ({ ...e })) }))
   );
@@ -54,12 +85,21 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
   const [newTemplateName, setNewTemplateName] = useState('');
   const [newTemplateEx, setNewTemplateEx] = useState('Push-ups, Pull-ups, Planks');
 
-  // Vitals & Targets state (no fake defaults)
-  const [weight, setWeight] = useState(biometrics?.weight_kg !== undefined ? String(biometrics.weight_kg) : '');
-  const [steps, setSteps] = useState(biometrics?.steps !== undefined ? String(biometrics.steps) : '');
-  const [sleep, setSleep] = useState(biometrics?.sleep_hours !== undefined ? String(biometrics.sleep_hours) : '');
-  const [bpm, setBpm] = useState(biometrics?.resting_hr !== undefined ? String(biometrics.resting_hr) : '');
-  const [waterMl, setWaterMl] = useState(biometrics?.water_ml !== undefined ? String(biometrics.water_ml) : '');
+  const [weight, setWeight] = useState(
+    biometrics?.weight_kg !== undefined ? String(biometrics.weight_kg) : ''
+  );
+  const [steps, setSteps] = useState(
+    biometrics?.steps !== undefined ? String(biometrics.steps) : ''
+  );
+  const [sleep, setSleep] = useState(
+    biometrics?.sleep_hours !== undefined ? String(biometrics.sleep_hours) : ''
+  );
+  const [bpm, setBpm] = useState(
+    biometrics?.resting_hr !== undefined ? String(biometrics.resting_hr) : ''
+  );
+  const [waterMl, setWaterMl] = useState(
+    biometrics?.water_ml !== undefined ? String(biometrics.water_ml) : ''
+  );
 
   const [calTarget, setCalTarget] = useState(String(targets.target_calories || 2200));
   const [proTarget, setProTarget] = useState(String(targets.target_protein_g || 160));
@@ -72,7 +112,6 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
     setTimeout(() => setStatusMsg(null), 1800);
   };
 
-  // --- Meals handlers ---
   const handleSaveMeal = async (meal: MealLog) => {
     if (!meal.id) return;
     await db.meal_logs.update(meal.id, {
@@ -84,7 +123,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
       fat_g: Number(meal.fat_g) || 0,
     });
     onRefresh();
-    flash('Meal updated');
+    flash('Saved');
   };
 
   const handleDeleteMeal = async (id?: number) => {
@@ -92,7 +131,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
     await db.meal_logs.delete(id);
     setMealDrafts((prev) => prev.filter((m) => m.id !== id));
     onRefresh();
-    flash('Meal removed');
+    flash('Removed');
   };
 
   const handleAddMeal = async () => {
@@ -100,7 +139,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
     if (!name) return;
     const cal = Number(newMealCal) || 300;
     const pro = Number(newMealPro) || 20;
-    const id = await db.meal_logs.add({
+    const newEntry: MealLog = {
       date: currentDate,
       meal_type: 'lunch',
       raw_phrase: name,
@@ -112,41 +151,25 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
       logged_at: new Date().toISOString(),
       was_cached: false,
       image_url: getFoodImageFallback(name),
-    });
-    setMealDrafts((prev) => [
-      ...prev,
-      {
-        id,
-        date: currentDate,
-        meal_type: 'lunch',
-        raw_phrase: name,
-        display_name: name,
-        calories: cal,
-        protein_g: pro,
-        carbs_g: Math.round((cal * 0.4) / 4),
-        fat_g: Math.round((cal * 0.25) / 9),
-        logged_at: new Date().toISOString(),
-        was_cached: false,
-        image_url: getFoodImageFallback(name),
-      },
-    ]);
+    };
+    const id = await db.meal_logs.add(newEntry);
+    setMealDrafts((prev) => [...prev, { ...newEntry, id }]);
     setNewMealName('');
     onRefresh();
-    flash('Meal added');
+    flash('Added');
   };
 
-  // --- Train handlers ---
   const handleSaveTemplate = async (tmpl: WorkoutTemplate) => {
     await db.workout_templates.put(tmpl);
     onRefresh();
-    flash('Routine updated');
+    flash('Saved');
   };
 
   const handleDeleteTemplate = async (id: string) => {
     await db.workout_templates.delete(id);
     setTemplateDrafts((prev) => prev.filter((t) => t.id !== id));
     onRefresh();
-    flash('Routine deleted');
+    flash('Deleted');
   };
 
   const handleAddTemplate = async () => {
@@ -167,7 +190,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
     setTemplateDrafts((prev) => [...prev, tmpl]);
     setNewTemplateName('');
     onRefresh();
-    flash('Routine created');
+    flash('Created');
   };
 
   const handleSaveSession = async (sess: WorkoutSession) => {
@@ -178,7 +201,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
       exercises: sess.exercises,
     });
     onRefresh();
-    flash('Session updated');
+    flash('Saved');
   };
 
   const handleDeleteSession = async (id?: number) => {
@@ -186,10 +209,9 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
     await db.workout_sessions.delete(id);
     setSessionDrafts((prev) => prev.filter((s) => s.id !== id));
     onRefresh();
-    flash('Session deleted');
+    flash('Deleted');
   };
 
-  // --- Vitals & Targets handler ---
   const handleSaveVitalsAndTargets = async () => {
     const existingBio = await db.daily_biometrics.get(currentDate);
     await db.daily_biometrics.put({
@@ -216,12 +238,18 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
     });
 
     onRefresh();
-    flash('Vitals & targets saved');
+    flash('Saved');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/50 backdrop-blur-sm">
-      <div className="w-full max-w-[430px] sm:max-w-md h-[88dvh] bg-cream-100 border-t sm:border border-cream-200 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden">
+    <div
+      onClick={onClose}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-ink/50 backdrop-blur-sm"
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[430px] sm:max-w-md h-[88dvh] bg-cream-100 border-t sm:border border-cream-200 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+      >
         {/* Header */}
         <div className="px-4 py-3.5 bg-white border-b border-cream-200 flex items-center justify-between shrink-0">
           <div>
@@ -266,96 +294,112 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
           </div>
         </div>
 
-        {/* Scrollable Editor Body */}
+        {/* Scrollable Body */}
         <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-3 scrollbar-none">
           {section === 'meals' && (
             <>
-              {/* Quick Add Meal */}
-              <div className="bg-white rounded-2xl p-3 border border-cream-200 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute block">
-                  Add Meal
-                </span>
-                <div className="flex gap-2">
+              {/* Quick Add Meal with Column Labels */}
+              <div className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2">
+                <div className="grid grid-cols-[1fr_64px_56px_38px] gap-1.5 text-xs font-bold text-ink-mute px-0.5">
+                  <span className="flex items-center gap-1">
+                    <UtensilsCrossed size={13} className="text-coral" /> Meal
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Flame size={13} className="text-coral" /> Cal
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Zap size={13} className="text-sun" /> Pro
+                  </span>
+                  <span />
+                </div>
+                <div className="grid grid-cols-[1fr_64px_56px_38px] gap-1.5">
                   <input
                     type="text"
-                    placeholder="Meal name (e.g. Oats bowl)"
+                    placeholder="Oats bowl"
                     value={newMealName}
                     onChange={(e) => setNewMealName(e.target.value)}
-                    className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs text-ink"
+                    className="bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-2 text-sm text-ink"
                   />
                   <input
                     type="number"
-                    placeholder="kcal"
                     value={newMealCal}
                     onChange={(e) => setNewMealCal(e.target.value)}
-                    className="w-16 bg-cream-100 border border-cream-200 rounded-xl px-2 py-1.5 text-xs font-mono text-ink"
+                    className="bg-cream-100 border border-cream-200 rounded-xl px-2 py-2 text-sm font-mono text-ink text-center"
                   />
                   <input
                     type="number"
-                    placeholder="pro"
                     value={newMealPro}
                     onChange={(e) => setNewMealPro(e.target.value)}
-                    className="w-14 bg-cream-100 border border-cream-200 rounded-xl px-2 py-1.5 text-xs font-mono text-ink"
+                    className="bg-cream-100 border border-cream-200 rounded-xl px-2 py-2 text-sm font-mono text-ink text-center"
                   />
                   <button
                     onClick={handleAddMeal}
-                    className="px-2.5 rounded-xl bg-coral text-white flex items-center justify-center"
+                    className="rounded-xl bg-coral text-white flex items-center justify-center"
                     title="Add meal"
                   >
-                    <Plus size={15} />
+                    <Plus size={18} />
                   </button>
                 </div>
               </div>
 
               {mealDrafts.length === 0 ? (
-                <div className="bg-white rounded-2xl p-5 border border-dashed border-cream-200 text-center text-xs text-ink-mute">
-                  No meals logged for {currentDate}.
+                <div className="bg-white rounded-2xl p-5 border border-dashed border-cream-200 text-center text-sm text-ink-mute">
+                  No meals logged
                 </div>
               ) : (
                 mealDrafts.map((meal, idx) => (
                   <div
                     key={meal.id ?? idx}
-                    className="bg-white rounded-2xl p-3 border border-cream-200 space-y-2"
+                    className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2.5"
                   >
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="text"
-                        value={meal.display_name}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setMealDrafts((prev) =>
-                            prev.map((m, i) => (i === idx ? { ...m, display_name: val } : m))
-                          );
-                        }}
-                        className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-ink"
-                      />
-                      <select
-                        value={meal.meal_type}
-                        onChange={(e) => {
-                          const val = e.target.value as MealLog['meal_type'];
-                          setMealDrafts((prev) =>
-                            prev.map((m, i) => (i === idx ? { ...m, meal_type: val } : m))
-                          );
-                        }}
-                        className="bg-cream-100 border border-cream-200 rounded-xl px-2 py-1.5 text-[11px] font-semibold text-ink"
-                      >
-                        <option value="breakfast">Breakfast</option>
-                        <option value="lunch">Lunch</option>
-                        <option value="dinner">Dinner</option>
-                        <option value="snack">Snack</option>
-                      </select>
+                    <input
+                      type="text"
+                      value={meal.display_name}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setMealDrafts((prev) =>
+                          prev.map((m, i) => (i === idx ? { ...m, display_name: val } : m))
+                        );
+                      }}
+                      className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm font-bold text-ink"
+                    />
+
+                    {/* Custom Themed Pill Selector for Meal Type */}
+                    <div className="grid grid-cols-4 gap-1 bg-cream-100 p-1 rounded-xl border border-cream-200">
+                      {MEAL_TYPES.map((t) => (
+                        <button
+                          key={t.id}
+                          type="button"
+                          onClick={() =>
+                            setMealDrafts((prev) =>
+                              prev.map((m, i) => (i === idx ? { ...m, meal_type: t.id } : m))
+                            )
+                          }
+                          className={`py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                            meal.meal_type === t.id
+                              ? 'bg-coral text-white'
+                              : 'text-ink-mute hover:text-ink'
+                          }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
                     </div>
-                    <div className="grid grid-cols-4 gap-1.5 text-[10px]">
+
+                    {/* Explicit Macro Column Labels with Icons */}
+                    <div className="grid grid-cols-4 gap-1.5">
                       {(
                         [
-                          ['kcal', 'calories'],
-                          ['P (g)', 'protein_g'],
-                          ['C (g)', 'carbs_g'],
-                          ['F (g)', 'fat_g'],
+                          { label: 'Cal', key: 'calories', icon: Flame, color: 'text-coral' },
+                          { label: 'Pro', key: 'protein_g', icon: Zap, color: 'text-coral' },
+                          { label: 'Carb', key: 'carbs_g', icon: Wheat, color: 'text-sun' },
+                          { label: 'Fat', key: 'fat_g', icon: Droplet, color: 'text-rose' },
                         ] as const
-                      ).map(([label, key]) => (
+                      ).map(({ label, key, icon: Icon, color }) => (
                         <label key={key} className="block">
-                          <span className="text-ink-mute font-semibold block mb-0.5">{label}</span>
+                          <span className="text-xs text-ink-mute font-bold flex items-center gap-1 mb-1">
+                            <Icon size={12} className={color} /> {label}
+                          </span>
                           <input
                             type="number"
                             value={meal[key]}
@@ -365,23 +409,24 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                                 prev.map((m, i) => (i === idx ? { ...m, [key]: val } : m))
                               );
                             }}
-                            className="w-full bg-cream-100 border border-cream-200 rounded-lg px-2 py-1 text-xs font-mono font-bold text-ink"
+                            className="w-full bg-cream-100 border border-cream-200 rounded-xl px-2 py-1.5 text-sm font-mono font-bold text-ink text-center"
                           />
                         </label>
                       ))}
                     </div>
+
                     <div className="flex justify-end gap-2 pt-1">
                       <button
                         onClick={() => handleDeleteMeal(meal.id)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-rose bg-rose-light flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose bg-rose-light flex items-center gap-1"
                       >
-                        <Trash2 size={12} /> Delete
+                        <Trash2 size={14} /> Delete
                       </button>
                       <button
                         onClick={() => handleSaveMeal(meal)}
-                        className="px-3 py-1 rounded-lg text-[11px] font-bold text-white bg-coral flex items-center gap-1"
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-coral flex items-center gap-1"
                       >
-                        <Check size={12} /> Save
+                        <Check size={14} /> Save
                       </button>
                     </div>
                   </div>
@@ -393,16 +438,16 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
           {section === 'train' && (
             <>
               {/* Add Routine Template */}
-              <div className="bg-white rounded-2xl p-3 border border-cream-200 space-y-2">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute block">
-                  New Workout Routine
+              <div className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-mute flex items-center gap-1.5">
+                  <Dumbbell size={14} className="text-coral" /> New Routine
                 </span>
                 <input
                   type="text"
-                  placeholder="Routine name (e.g. Upper Body)"
+                  placeholder="Routine name"
                   value={newTemplateName}
                   onChange={(e) => setNewTemplateName(e.target.value)}
-                  className="w-full bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs text-ink"
+                  className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm text-ink"
                 />
                 <div className="flex gap-2">
                   <input
@@ -410,56 +455,76 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                     placeholder="Exercises (comma separated)"
                     value={newTemplateEx}
                     onChange={(e) => setNewTemplateEx(e.target.value)}
-                    className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs text-ink"
+                    className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm text-ink"
                   />
                   <button
                     onClick={handleAddTemplate}
-                    className="px-3 rounded-xl bg-coral text-white text-xs font-bold flex items-center gap-1"
+                    className="px-3.5 rounded-xl bg-coral text-white text-sm font-bold flex items-center gap-1"
                   >
-                    <Plus size={14} /> Add
+                    <Plus size={16} /> Add
                   </button>
                 </div>
               </div>
 
               {/* Workout Templates */}
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute block px-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-ink-mute block px-1">
                 Routines ({templateDrafts.length})
               </span>
               {templateDrafts.map((tmpl, idx) => (
                 <div
                   key={tmpl.id}
-                  className="bg-white rounded-2xl p-3 border border-cream-200 space-y-2"
+                  className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2.5"
                 >
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={tmpl.name}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setTemplateDrafts((prev) =>
-                          prev.map((t, i) => (i === idx ? { ...t, name: val } : t))
-                        );
-                      }}
-                      className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-ink"
-                    />
-                    <select
-                      value={tmpl.category}
-                      onChange={(e) => {
-                        const val = e.target.value as WorkoutTemplate['category'];
-                        setTemplateDrafts((prev) =>
-                          prev.map((t, i) => (i === idx ? { ...t, category: val } : t))
-                        );
-                      }}
-                      className="bg-cream-100 border border-cream-200 rounded-xl px-2 py-1.5 text-[11px] font-semibold text-ink"
-                    >
-                      <option value="strength">Strength</option>
-                      <option value="cardio">Cardio</option>
-                      <option value="mobility">Mobility</option>
-                    </select>
+                  <input
+                    type="text"
+                    value={tmpl.name}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setTemplateDrafts((prev) =>
+                        prev.map((t, i) => (i === idx ? { ...t, name: val } : t))
+                      );
+                    }}
+                    className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm font-bold text-ink"
+                  />
+
+                  {/* Custom Themed Pill Selector for Category */}
+                  <div className="grid grid-cols-3 gap-1 bg-cream-100 p-1 rounded-xl border border-cream-200">
+                    {WORKOUT_CATEGORIES.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() =>
+                          setTemplateDrafts((prev) =>
+                            prev.map((t, i) => (i === idx ? { ...t, category: c.id } : t))
+                          )
+                        }
+                        className={`py-1.5 rounded-lg text-xs font-bold transition-colors ${
+                          tmpl.category === c.id
+                            ? 'bg-coral text-white'
+                            : 'text-ink-mute hover:text-ink'
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-1">
+
+                  {/* Explicit Exercise Columns Header */}
+                  <div className="grid grid-cols-[1fr_54px_54px] gap-1.5 text-xs font-bold text-ink-mute px-0.5 pt-1">
+                    <span className="flex items-center gap-1">
+                      <Dumbbell size={12} className="text-coral" /> Exercise
+                    </span>
+                    <span className="flex items-center justify-center gap-1">
+                      <Repeat size={12} className="text-sun" /> Sets
+                    </span>
+                    <span className="flex items-center justify-center gap-1">
+                      <Target size={12} className="text-sky" /> Reps
+                    </span>
+                  </div>
+
+                  <div className="space-y-1.5">
                     {tmpl.exercises.map((ex, exIdx) => (
-                      <div key={exIdx} className="flex items-center gap-1.5">
+                      <div key={exIdx} className="grid grid-cols-[1fr_54px_54px] gap-1.5">
                         <input
                           type="text"
                           value={ex.name}
@@ -478,7 +543,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                               )
                             );
                           }}
-                          className="flex-1 bg-cream-100 rounded-lg px-2 py-1 text-[11px] text-ink"
+                          className="bg-cream-100 rounded-xl px-2.5 py-1.5 text-[13px] text-ink"
                         />
                         <input
                           type="number"
@@ -498,8 +563,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                               )
                             );
                           }}
-                          className="w-11 bg-cream-100 rounded-lg px-1.5 py-1 text-[11px] font-mono text-center"
-                          title="Sets"
+                          className="bg-cream-100 rounded-xl px-1.5 py-1.5 text-[13px] font-mono font-bold text-center"
                         />
                         <input
                           type="number"
@@ -519,8 +583,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                               )
                             );
                           }}
-                          className="w-12 bg-cream-100 rounded-lg px-1.5 py-1 text-[11px] font-mono text-center"
-                          title="Reps"
+                          className="bg-cream-100 rounded-xl px-1.5 py-1.5 text-[13px] font-mono font-bold text-center"
                         />
                       </div>
                     ))}
@@ -528,35 +591,41 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                   <div className="flex justify-end gap-2 pt-1">
                     <button
                       onClick={() => handleDeleteTemplate(tmpl.id)}
-                      className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-rose bg-rose-light flex items-center gap-1"
+                      className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose bg-rose-light flex items-center gap-1"
                     >
-                      <Trash2 size={12} /> Delete
+                      <Trash2 size={14} /> Delete
                     </button>
                     <button
                       onClick={() => handleSaveTemplate(tmpl)}
-                      className="px-3 py-1 rounded-lg text-[11px] font-bold text-white bg-coral flex items-center gap-1"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-coral flex items-center gap-1"
                     >
-                      <Check size={12} /> Save
+                      <Check size={14} /> Save
                     </button>
                   </div>
                 </div>
               ))}
 
               {/* Completed Sessions Today */}
-              <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute block px-1 pt-1">
-                Logged Sessions ({sessionDrafts.length})
+              <span className="text-xs font-bold uppercase tracking-wider text-ink-mute block px-1 pt-1">
+                Sessions ({sessionDrafts.length})
               </span>
               {sessionDrafts.length === 0 ? (
-                <div className="bg-white rounded-2xl p-4 border border-dashed border-cream-200 text-center text-xs text-ink-mute">
-                  No completed workouts logged for {currentDate}.
+                <div className="bg-white rounded-2xl p-4 border border-dashed border-cream-200 text-center text-sm text-ink-mute">
+                  No workouts logged
                 </div>
               ) : (
                 sessionDrafts.map((sess, idx) => (
                   <div
                     key={sess.id ?? idx}
-                    className="bg-white rounded-2xl p-3 border border-cream-200 space-y-2"
+                    className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2.5"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="grid grid-cols-[1fr_72px] gap-1.5 text-xs font-bold text-ink-mute px-0.5">
+                      <span>Session</span>
+                      <span className="flex items-center justify-center gap-1">
+                        <Clock size={12} className="text-coral" /> Min
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-[1fr_72px] gap-1.5">
                       <input
                         type="text"
                         value={sess.name}
@@ -566,7 +635,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                             prev.map((s, i) => (i === idx ? { ...s, name: val } : s))
                           );
                         }}
-                        className="flex-1 bg-cream-100 border border-cream-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-ink"
+                        className="bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm font-bold text-ink"
                       />
                       <input
                         type="number"
@@ -577,21 +646,21 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                             prev.map((s, i) => (i === idx ? { ...s, duration_minutes: val } : s))
                           );
                         }}
-                        className="w-16 bg-cream-100 border border-cream-200 rounded-xl px-2 py-1.5 text-xs font-mono text-ink"
+                        className="bg-cream-100 border border-cream-200 rounded-xl px-2 py-2 text-sm font-mono font-bold text-ink text-center"
                       />
                     </div>
                     <div className="flex justify-end gap-2">
                       <button
                         onClick={() => handleDeleteSession(sess.id)}
-                        className="px-2.5 py-1 rounded-lg text-[11px] font-bold text-rose bg-rose-light flex items-center gap-1"
+                        className="px-3 py-1.5 rounded-xl text-xs font-bold text-rose bg-rose-light flex items-center gap-1"
                       >
-                        <Trash2 size={12} /> Delete
+                        <Trash2 size={14} /> Delete
                       </button>
                       <button
                         onClick={() => handleSaveSession(sess)}
-                        className="px-3 py-1 rounded-lg text-[11px] font-bold text-white bg-coral flex items-center gap-1"
+                        className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-coral flex items-center gap-1"
                       >
-                        <Check size={12} /> Save
+                        <Check size={14} /> Save
                       </button>
                     </div>
                   </div>
@@ -603,27 +672,27 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
           {section === 'vitals' && (
             <div className="space-y-3">
               <div className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2.5">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-ink-mute block">
-                  Daily Vitals
+                <span className="text-xs font-bold uppercase tracking-wider text-ink-mute block">
+                  Vitals
                 </span>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   {[
-                    ['Weight (kg)', weight, setWeight, '0.1'],
-                    ['Steps', steps, setSteps, '100'],
-                    ['Sleep (hrs)', sleep, setSleep, '0.1'],
-                    ['Resting HR (bpm)', bpm, setBpm, '1'],
-                    ['Water (ml)', waterMl, setWaterMl, '250'],
-                  ].map(([label, val, setter, step]) => (
-                    <label key={label as string} className="block">
-                      <span className="text-xs font-bold text-ink-mute block mb-1">
-                        {label as string}
+                    { label: 'Weight (kg)', val: weight, set: setWeight, step: '0.1', icon: Scale, color: 'text-coral' },
+                    { label: 'Steps', val: steps, set: setSteps, step: '100', icon: Footprints, color: 'text-sun' },
+                    { label: 'Sleep (hrs)', val: sleep, set: setSleep, step: '0.1', icon: Moon, color: 'text-coral' },
+                    { label: 'Heart (bpm)', val: bpm, set: setBpm, step: '1', icon: Heart, color: 'text-rose' },
+                    { label: 'Water (ml)', val: waterMl, set: setWaterMl, step: '250', icon: Droplets, color: 'text-sky' },
+                  ].map(({ label, val, set, step, icon: Icon, color }) => (
+                    <label key={label} className="block">
+                      <span className="text-xs font-bold text-ink-mute flex items-center gap-1 mb-1">
+                        <Icon size={13} className={color} /> {label}
                       </span>
                       <input
                         type="number"
-                        step={step as string}
+                        step={step}
                         placeholder="--"
-                        value={val as string}
-                        onChange={(e) => (setter as (v: string) => void)(e.target.value)}
+                        value={val}
+                        onChange={(e) => set(e.target.value)}
                         className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-ink"
                       />
                     </label>
@@ -633,24 +702,24 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
 
               <div className="bg-white rounded-2xl p-3.5 border border-cream-200 space-y-2.5">
                 <span className="text-xs font-bold uppercase tracking-wider text-ink-mute block">
-                  Daily Targets
+                  Targets
                 </span>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   {[
-                    ['Calories (kcal)', calTarget, setCalTarget],
-                    ['Protein (g)', proTarget, setProTarget],
-                    ['Carbs (g)', carbTarget, setCarbTarget],
-                    ['Fat (g)', fatTarget, setFatTarget],
-                    ['Water Goal (ml)', waterTarget, setWaterTarget],
-                  ].map(([label, val, setter]) => (
-                    <label key={label as string} className="block">
-                      <span className="text-xs font-bold text-ink-mute block mb-1">
-                        {label as string}
+                    { label: 'Calories', val: calTarget, set: setCalTarget, icon: Flame, color: 'text-coral' },
+                    { label: 'Protein (g)', val: proTarget, set: setProTarget, icon: Zap, color: 'text-coral' },
+                    { label: 'Carbs (g)', val: carbTarget, set: setCarbTarget, icon: Wheat, color: 'text-sun' },
+                    { label: 'Fats (g)', val: fatTarget, set: setFatTarget, icon: Droplet, color: 'text-rose' },
+                    { label: 'Water (ml)', val: waterTarget, set: setWaterTarget, icon: Droplets, color: 'text-sky' },
+                  ].map(({ label, val, set, icon: Icon, color }) => (
+                    <label key={label} className="block">
+                      <span className="text-xs font-bold text-ink-mute flex items-center gap-1 mb-1">
+                        <Icon size={13} className={color} /> {label}
                       </span>
                       <input
                         type="number"
-                        value={val as string}
-                        onChange={(e) => (setter as (v: string) => void)(e.target.value)}
+                        value={val}
+                        onChange={(e) => set(e.target.value)}
                         className="w-full bg-cream-100 border border-cream-200 rounded-xl px-3 py-2 text-sm font-mono font-bold text-ink"
                       />
                     </label>
@@ -663,7 +732,7 @@ export const EditHubModal: React.FC<EditHubModalProps> = ({
                 className="w-full py-3.5 rounded-2xl bg-coral text-white font-bold text-sm flex items-center justify-center gap-1.5 shadow-card"
               >
                 <Check size={17} />
-                <span>Save All Vitals & Targets</span>
+                <span>Save All</span>
               </button>
             </div>
           )}
