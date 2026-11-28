@@ -1,15 +1,23 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1284" height="2778" viewBox="0 0 1284 2778">
+  <defs>
+    <linearGradient id="splashGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#FF5C35"/>
+      <stop offset="100%" stop-color="#FF7A45"/>
+    </linearGradient>
+  </defs>
   <rect width="1284" height="2778" fill="#FFF9F3"/>
-  <g transform="translate(492, 1089)">
-    <defs>
-      <linearGradient id="splashGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#FF5C35"/>
-        <stop offset="100%" stop-color="#FF2D75"/>
-      </linearGradient>
-    </defs>
-    <rect width="300" height="300" rx="72" fill="url(#splashGrad)"/>
-    <text x="150" y="180" text-anchor="middle" font-family="Inter, sans-serif" font-size="110" font-weight="900" fill="#FFFFFF" letter-spacing="-3">AY</text>
+  <g transform="translate(492, 1100)">
+    <rect width="300" height="300" rx="84" fill="url(#splashGrad)"/>
+    <g transform="translate(36, 36) scale(3.5625)" fill="none" stroke="none">
+      <circle cx="32" cy="18" r="10" stroke="#FFFFFF" stroke-opacity="0.38" stroke-width="1.75"/>
+      <circle cx="32" cy="18" r="5.5" fill="#FFFFFF"/>
+      <circle cx="32" cy="10.8" r="2.1" fill="#FFFFFF"/>
+      <path d="M23 30C23 26.2 26.8 24.5 32 24.5C37.2 24.5 41 26.2 41 30L38.2 41.5H25.8L23 30Z" fill="#FFFFFF"/>
+      <path d="M23.5 29.5L16.5 39.5C15.8 40.5 16.5 42 17.8 42H23.5" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M40.5 29.5L47.5 39.5C48.2 40.5 47.5 42 46.2 42H40.5" stroke="#FFFFFF" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M15 47.5C15 44 19 42.5 25 43.2L32 44.5L39 43.2C45 42.5 49 44 49 47.5C49 50.5 43.5 52 32 52C20.5 52 15 50.5 15 47.5Z" fill="#FFFFFF"/>
+      <path d="M20 55.5H44" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="2" stroke-linecap="round"/>
+    </g>
   </g>
-  <text x="642" y="1470" text-anchor="middle" font-family="Inter, sans-serif" font-size="64" font-weight="900" fill="#1A1033" letter-spacing="-1">Ayu</text>
-  <text x="642" y="1520" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="24" font-weight="700" fill="#7A6F8F" letter-spacing="6">PERSONAL TELEMETRY</text>
+  <text x="642" y="1488" text-anchor="middle" font-family="Plus Jakarta Sans, Inter, sans-serif" font-size="72" font-weight="800" fill="#1A1033" letter-spacing="-1">Ayu</text>
 </svg>
