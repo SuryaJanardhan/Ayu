@@ -101,6 +101,34 @@ export const App: React.FC = () => {
     init();
   }, [loadDashboardData]);
 
+  // Listen for live Android native pedometer step increments
+  useEffect(() => {
+    const handleMessage = async (event: MessageEvent) => {
+      try {
+        const parsed = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        if (parsed?.type === 'AYU_PHONE_STEPS_DELTA' && parsed.delta > 0) {
+          const todayKey = getTodayDateString();
+          const existing = await db.daily_biometrics.get(todayKey);
+          await db.daily_biometrics.put({
+            ...existing,
+            date: todayKey,
+            steps: (existing?.steps || 0) + parsed.delta,
+            water_ml: existing?.water_ml ?? 0,
+            weight_is_manual: existing?.weight_is_manual ?? false,
+            sleep_is_manual: existing?.sleep_is_manual ?? false,
+            updated_at: new Date().toISOString(),
+          });
+          await loadDashboardData();
+        }
+      } catch {
+        // Ignore unrelated window messages
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [loadDashboardData]);
+
   const handleOpenSessionModal = (template?: WorkoutTemplate) => {
     setActiveWorkoutTemplate(template);
     setIsWorkoutModalOpen(true);

@@ -18,6 +18,7 @@
   "dependencies": {
     "dexie": "^4.0.10",
     "expo": "~51.0.39",
+    "expo-sensors": "~13.0.9",
     "expo-updates": "~0.25.28",
     "graphql": "^17.1.0",
     "lucide-react": "^0.468.0",
